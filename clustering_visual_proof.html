@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_f3e0c40fd0de39ecb7e0badf1a246012 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.1.0/MarkerCluster.Default.css"/>
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_f3e0c40fd0de39ecb7e0badf1a246012" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_f3e0c40fd0de39ecb7e0badf1a246012 = L.map(
+                "map_f3e0c40fd0de39ecb7e0badf1a246012",
+                {
+                    center: [58.095082000000005, 15.183606],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 6,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_dfe4c46e0d54d9c4607b06a5d6056d61 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_dfe4c46e0d54d9c4607b06a5d6056d61.addTo(map_f3e0c40fd0de39ecb7e0badf1a246012);
+        
+    
+            var marker_cluster_e31eb916b12f8d10bbc19c50be1c2075 = L.markerClusterGroup(
+                {
+}
+            );
+        
+    
+            var marker_0da341e9513666eeb59c98c991bef76d = L.marker(
+                [59.3293, 18.0686],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_f32072da09c5d46d40c155281213cb46 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_31562697f9189e1889dba618bc487dee = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_a8ea8960eba029b4ee209d2ca000ff9a = $(`<div id="html_a8ea8960eba029b4ee209d2ca000ff9a" style="width: 100.0%; height: 100.0%;"><b>Parus major</b> (Great Tit)<br>Observation at (59.3293, 18.0686)<br>Date: 2024-10-15</div>`)[0];
+                popup_31562697f9189e1889dba618bc487dee.setContent(html_a8ea8960eba029b4ee209d2ca000ff9a);
+            
+        
+
+        marker_0da341e9513666eeb59c98c991bef76d.bindPopup(popup_31562697f9189e1889dba618bc487dee)
+        ;
+
+        
+    
+    
+                marker_0da341e9513666eeb59c98c991bef76d.setIcon(icon_f32072da09c5d46d40c155281213cb46);
+            
+    
+            var marker_b89da100955f874c13a4f2c235b534df = L.marker(
+                [59.332, 18.07],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_cd4eac201a9e46ec3b2985ac89b8bb8c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7a222d3236b114ec029dbaab3f192530 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_64a3677493d67e4de870ecfc20e1ad1b = $(`<div id="html_64a3677493d67e4de870ecfc20e1ad1b" style="width: 100.0%; height: 100.0%;"><b>Turdus merula</b> (Common Blackbird)<br>Observation at (59.3320, 18.0700)<br>Date: 2024-10-16</div>`)[0];
+                popup_7a222d3236b114ec029dbaab3f192530.setContent(html_64a3677493d67e4de870ecfc20e1ad1b);
+            
+        
+
+        marker_b89da100955f874c13a4f2c235b534df.bindPopup(popup_7a222d3236b114ec029dbaab3f192530)
+        ;
+
+        
+    
+    
+                marker_b89da100955f874c13a4f2c235b534df.setIcon(icon_cd4eac201a9e46ec3b2985ac89b8bb8c);
+            
+    
+            var marker_4f15afe5f6d977de6df691422cee1bb0 = L.marker(
+                [59.335, 18.075],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_56be6cc600a18d724b57c999ae35ef60 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ff61d52006639c0879987efc0cb9f3c1 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_c6a87515c112e1833b8f1a0d7c670ad3 = $(`<div id="html_c6a87515c112e1833b8f1a0d7c670ad3" style="width: 100.0%; height: 100.0%;"><b>Passer domesticus</b> (House Sparrow)<br>Observation at (59.3350, 18.0750)<br>Date: 2024-10-17</div>`)[0];
+                popup_ff61d52006639c0879987efc0cb9f3c1.setContent(html_c6a87515c112e1833b8f1a0d7c670ad3);
+            
+        
+
+        marker_4f15afe5f6d977de6df691422cee1bb0.bindPopup(popup_ff61d52006639c0879987efc0cb9f3c1)
+        ;
+
+        
+    
+    
+                marker_4f15afe5f6d977de6df691422cee1bb0.setIcon(icon_56be6cc600a18d724b57c999ae35ef60);
+            
+    
+            var marker_66e6b145a1459d534573d7dd535f5ed5 = L.marker(
+                [59.328, 18.065],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_16ef6a8e653d21478bd5ff9909d10b2c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_cac739fd941f33a591c7b0a16cb40606 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_041562c211ef0177320788504bcc292c = $(`<div id="html_041562c211ef0177320788504bcc292c" style="width: 100.0%; height: 100.0%;"><b>Fringilla coelebs</b> (Common Chaffinch)<br>Observation at (59.3280, 18.0650)<br>Date: 2024-10-18</div>`)[0];
+                popup_cac739fd941f33a591c7b0a16cb40606.setContent(html_041562c211ef0177320788504bcc292c);
+            
+        
+
+        marker_66e6b145a1459d534573d7dd535f5ed5.bindPopup(popup_cac739fd941f33a591c7b0a16cb40606)
+        ;
+
+        
+    
+    
+                marker_66e6b145a1459d534573d7dd535f5ed5.setIcon(icon_16ef6a8e653d21478bd5ff9909d10b2c);
+            
+    
+            var marker_4a262d95712147fcab7fa4fd52697652 = L.marker(
+                [59.34, 18.08],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7129ee860df6768b31e410d08bbed784 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b18516892885f67e6d5930a8b598e485 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_fa2af120cf5a2e38e38427da3e6b18c9 = $(`<div id="html_fa2af120cf5a2e38e38427da3e6b18c9" style="width: 100.0%; height: 100.0%;"><b>Erithacus rubecula</b> (European Robin)<br>Observation at (59.3400, 18.0800)<br>Date: 2024-10-19</div>`)[0];
+                popup_b18516892885f67e6d5930a8b598e485.setContent(html_fa2af120cf5a2e38e38427da3e6b18c9);
+            
+        
+
+        marker_4a262d95712147fcab7fa4fd52697652.bindPopup(popup_b18516892885f67e6d5930a8b598e485)
+        ;
+
+        
+    
+    
+                marker_4a262d95712147fcab7fa4fd52697652.setIcon(icon_7129ee860df6768b31e410d08bbed784);
+            
+    
+            var marker_75e3e479244cb6538b08c5013d52a4b6 = L.marker(
+                [59.325, 18.062],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7025885c547ccff811c92500c1111da5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_1cd44c34145c42d6288f2f6369f07d14 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_66e994a829a0c59fc9e8f5d9bebe04fb = $(`<div id="html_66e994a829a0c59fc9e8f5d9bebe04fb" style="width: 100.0%; height: 100.0%;"><b>Phylloscopus trochilus</b> (Willow Warbler)<br>Observation at (59.3250, 18.0620)<br>Date: 2024-10-20</div>`)[0];
+                popup_1cd44c34145c42d6288f2f6369f07d14.setContent(html_66e994a829a0c59fc9e8f5d9bebe04fb);
+            
+        
+
+        marker_75e3e479244cb6538b08c5013d52a4b6.bindPopup(popup_1cd44c34145c42d6288f2f6369f07d14)
+        ;
+
+        
+    
+    
+                marker_75e3e479244cb6538b08c5013d52a4b6.setIcon(icon_7025885c547ccff811c92500c1111da5);
+            
+    
+            var marker_84d6d4914a66598131b145fe8b1b2815 = L.marker(
+                [59.338, 18.078],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_67d3df0b255ab885c3f2e6780aa904e9 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5e0d2a9eeb90a308b8079458462a526d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_956c2c31df14bc3315b9e73bca10542f = $(`<div id="html_956c2c31df14bc3315b9e73bca10542f" style="width: 100.0%; height: 100.0%;"><b>Carduelis chloris</b> (European Greenfinch)<br>Observation at (59.3380, 18.0780)<br>Date: 2024-10-21</div>`)[0];
+                popup_5e0d2a9eeb90a308b8079458462a526d.setContent(html_956c2c31df14bc3315b9e73bca10542f);
+            
+        
+
+        marker_84d6d4914a66598131b145fe8b1b2815.bindPopup(popup_5e0d2a9eeb90a308b8079458462a526d)
+        ;
+
+        
+    
+    
+                marker_84d6d4914a66598131b145fe8b1b2815.setIcon(icon_67d3df0b255ab885c3f2e6780aa904e9);
+            
+    
+            var marker_dd94b75a3bc42e2a349ae9081b867b15 = L.marker(
+                [59.331, 18.071],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_f448e3359e36c0ec1ee7a89a5191a15a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_c7f3387d35ece5b3095b8f7a63b2a205 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ecb816384fa4d39adc5bba2508f87b2f = $(`<div id="html_ecb816384fa4d39adc5bba2508f87b2f" style="width: 100.0%; height: 100.0%;"><b>Sturnus vulgaris</b> (Common Starling)<br>Observation at (59.3310, 18.0710)<br>Date: 2024-10-22</div>`)[0];
+                popup_c7f3387d35ece5b3095b8f7a63b2a205.setContent(html_ecb816384fa4d39adc5bba2508f87b2f);
+            
+        
+
+        marker_dd94b75a3bc42e2a349ae9081b867b15.bindPopup(popup_c7f3387d35ece5b3095b8f7a63b2a205)
+        ;
+
+        
+    
+    
+                marker_dd94b75a3bc42e2a349ae9081b867b15.setIcon(icon_f448e3359e36c0ec1ee7a89a5191a15a);
+            
+    
+            var marker_40032e12dd13c2ac61de639f31d85d2f = L.marker(
+                [59.329, 18.068],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_e8b328b61dd78d8601ec350bf9723e5b = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_9582e7697e2f1b6ea995c9f6b5141322 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4122581bb97eb0dd21ddc2be5a8768dd = $(`<div id="html_4122581bb97eb0dd21ddc2be5a8768dd" style="width: 100.0%; height: 100.0%;"><b>Corvus cornix</b> (Hooded Crow)<br>Observation at (59.3290, 18.0680)<br>Date: 2024-10-23</div>`)[0];
+                popup_9582e7697e2f1b6ea995c9f6b5141322.setContent(html_4122581bb97eb0dd21ddc2be5a8768dd);
+            
+        
+
+        marker_40032e12dd13c2ac61de639f31d85d2f.bindPopup(popup_9582e7697e2f1b6ea995c9f6b5141322)
+        ;
+
+        
+    
+    
+                marker_40032e12dd13c2ac61de639f31d85d2f.setIcon(icon_e8b328b61dd78d8601ec350bf9723e5b);
+            
+    
+            var marker_690956c2c2103d1a9a3d5769993a359d = L.marker(
+                [59.336, 18.076],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_ba264d3d71db6c0fab8a5adf24ac06ce = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_12143aae6428c2f2e0365c60fe7d92f5 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4c0620a5a32163a210e6ad25fc9266e9 = $(`<div id="html_4c0620a5a32163a210e6ad25fc9266e9" style="width: 100.0%; height: 100.0%;"><b>Motacilla alba</b> (White Wagtail)<br>Observation at (59.3360, 18.0760)<br>Date: 2024-10-24</div>`)[0];
+                popup_12143aae6428c2f2e0365c60fe7d92f5.setContent(html_4c0620a5a32163a210e6ad25fc9266e9);
+            
+        
+
+        marker_690956c2c2103d1a9a3d5769993a359d.bindPopup(popup_12143aae6428c2f2e0365c60fe7d92f5)
+        ;
+
+        
+    
+    
+                marker_690956c2c2103d1a9a3d5769993a359d.setIcon(icon_ba264d3d71db6c0fab8a5adf24ac06ce);
+            
+    
+            var marker_8297165f69b441588661f9b85275dbd6 = L.marker(
+                [57.7089, 11.9746],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_9f7a5350e5427d828ab02334507d39c2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3133f5f6f7add2e1340c983918624b60 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_11ba20e813ea1178a169833dcf4e1b1c = $(`<div id="html_11ba20e813ea1178a169833dcf4e1b1c" style="width: 100.0%; height: 100.0%;"><b>Pica pica</b> (Eurasian Magpie)<br>Observation at (57.7089, 11.9746)<br>Date: 2024-10-25</div>`)[0];
+                popup_3133f5f6f7add2e1340c983918624b60.setContent(html_11ba20e813ea1178a169833dcf4e1b1c);
+            
+        
+
+        marker_8297165f69b441588661f9b85275dbd6.bindPopup(popup_3133f5f6f7add2e1340c983918624b60)
+        ;
+
+        
+    
+    
+                marker_8297165f69b441588661f9b85275dbd6.setIcon(icon_9f7a5350e5427d828ab02334507d39c2);
+            
+    
+            var marker_0a06bec889c3e97d190b5ed056ed16d4 = L.marker(
+                [57.71, 11.976],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_415c9cdd77d107435c7a215109c5dd20 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5d019b115572780da7b85cfb20c113c4 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_3aee293ae2eb86ed980973f66aecb434 = $(`<div id="html_3aee293ae2eb86ed980973f66aecb434" style="width: 100.0%; height: 100.0%;"><b>Garrulus glandarius</b> (Eurasian Jay)<br>Observation at (57.7100, 11.9760)<br>Date: 2024-10-26</div>`)[0];
+                popup_5d019b115572780da7b85cfb20c113c4.setContent(html_3aee293ae2eb86ed980973f66aecb434);
+            
+        
+
+        marker_0a06bec889c3e97d190b5ed056ed16d4.bindPopup(popup_5d019b115572780da7b85cfb20c113c4)
+        ;
+
+        
+    
+    
+                marker_0a06bec889c3e97d190b5ed056ed16d4.setIcon(icon_415c9cdd77d107435c7a215109c5dd20);
+            
+    
+            var marker_68b89071d83fd4d3853f0f1885869a7b = L.marker(
+                [57.705, 11.973],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_0d41fdc9414b2df1cdf4a9c6cc15049c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_1f862c58733eaa564e72e14834ca4430 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_8a7dc44384a79111fd29333358ba4857 = $(`<div id="html_8a7dc44384a79111fd29333358ba4857" style="width: 100.0%; height: 100.0%;"><b>Columba palumbus</b> (Common Wood Pigeon)<br>Observation at (57.7050, 11.9730)<br>Date: 2024-10-27</div>`)[0];
+                popup_1f862c58733eaa564e72e14834ca4430.setContent(html_8a7dc44384a79111fd29333358ba4857);
+            
+        
+
+        marker_68b89071d83fd4d3853f0f1885869a7b.bindPopup(popup_1f862c58733eaa564e72e14834ca4430)
+        ;
+
+        
+    
+    
+                marker_68b89071d83fd4d3853f0f1885869a7b.setIcon(icon_0d41fdc9414b2df1cdf4a9c6cc15049c);
+            
+    
+            var marker_7b6afad2021e8c14fab4ebbbdb1bda04 = L.marker(
+                [57.712, 11.978],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_ebeefdc0d39fac6198f2814dcd1427e5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ae0dae4ee8fb01f7659122133e66a3c1 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ed9cdbcbc2342f7ea556b5c670568d61 = $(`<div id="html_ed9cdbcbc2342f7ea556b5c670568d61" style="width: 100.0%; height: 100.0%;"><b>Dendrocopos major</b> (Great Spotted Woodpecker)<br>Observation at (57.7120, 11.9780)<br>Date: 2024-10-28</div>`)[0];
+                popup_ae0dae4ee8fb01f7659122133e66a3c1.setContent(html_ed9cdbcbc2342f7ea556b5c670568d61);
+            
+        
+
+        marker_7b6afad2021e8c14fab4ebbbdb1bda04.bindPopup(popup_ae0dae4ee8fb01f7659122133e66a3c1)
+        ;
+
+        
+    
+    
+                marker_7b6afad2021e8c14fab4ebbbdb1bda04.setIcon(icon_ebeefdc0d39fac6198f2814dcd1427e5);
+            
+    
+            var marker_4812df078a8ed4f470898e08ad13ea83 = L.marker(
+                [57.707, 11.974],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_f81683bfca7202b5dee6867f71217061 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8dc1123ccdbd7793e361d12c342877fb = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ec9eaa826a893337e46f862081c3dd16 = $(`<div id="html_ec9eaa826a893337e46f862081c3dd16" style="width: 100.0%; height: 100.0%;"><b>Sitta europaea</b> (Eurasian Nuthatch)<br>Observation at (57.7070, 11.9740)<br>Date: 2024-10-29</div>`)[0];
+                popup_8dc1123ccdbd7793e361d12c342877fb.setContent(html_ec9eaa826a893337e46f862081c3dd16);
+            
+        
+
+        marker_4812df078a8ed4f470898e08ad13ea83.bindPopup(popup_8dc1123ccdbd7793e361d12c342877fb)
+        ;
+
+        
+    
+    
+                marker_4812df078a8ed4f470898e08ad13ea83.setIcon(icon_f81683bfca7202b5dee6867f71217061);
+            
+    
+            var marker_b944deaac49eea5edaa48f0166fab208 = L.marker(
+                [57.711, 11.977],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_fb46cd302b1b8264244db8924551165a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6243195d9cb676330ffbca310294d508 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_265f884475b84ac8c4c730fbed0b9f59 = $(`<div id="html_265f884475b84ac8c4c730fbed0b9f59" style="width: 100.0%; height: 100.0%;"><b>Cyanistes caeruleus</b> (Eurasian Blue Tit)<br>Observation at (57.7110, 11.9770)<br>Date: 2024-10-15</div>`)[0];
+                popup_6243195d9cb676330ffbca310294d508.setContent(html_265f884475b84ac8c4c730fbed0b9f59);
+            
+        
+
+        marker_b944deaac49eea5edaa48f0166fab208.bindPopup(popup_6243195d9cb676330ffbca310294d508)
+        ;
+
+        
+    
+    
+                marker_b944deaac49eea5edaa48f0166fab208.setIcon(icon_fb46cd302b1b8264244db8924551165a);
+            
+    
+            var marker_e062d05adfec6cdbac3f5c5a8fc21b30 = L.marker(
+                [57.708, 11.975],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7cb6c94f93eab03bff121c0064e8068e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_4b0697c44ea6a08a8b0a4ed78b7a86a3 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_79d39cb105601879e5876f8eddb27341 = $(`<div id="html_79d39cb105601879e5876f8eddb27341" style="width: 100.0%; height: 100.0%;"><b>Troglodytes troglodytes</b> (Eurasian Wren)<br>Observation at (57.7080, 11.9750)<br>Date: 2024-10-16</div>`)[0];
+                popup_4b0697c44ea6a08a8b0a4ed78b7a86a3.setContent(html_79d39cb105601879e5876f8eddb27341);
+            
+        
+
+        marker_e062d05adfec6cdbac3f5c5a8fc21b30.bindPopup(popup_4b0697c44ea6a08a8b0a4ed78b7a86a3)
+        ;
+
+        
+    
+    
+                marker_e062d05adfec6cdbac3f5c5a8fc21b30.setIcon(icon_7cb6c94f93eab03bff121c0064e8068e);
+            
+    
+            var marker_597a5af489ef83355314c30ed798db8e = L.marker(
+                [57.7095, 11.9755],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_d42041e5fb362886c750eb55b45a5250 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_74c630bc55ac13b9dd60244dceaea1c2 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_711034516fd791416ed40d9ba3b82c71 = $(`<div id="html_711034516fd791416ed40d9ba3b82c71" style="width: 100.0%; height: 100.0%;"><b>Aegithalos caudatus</b> (Long-tailed Tit)<br>Observation at (57.7095, 11.9755)<br>Date: 2024-10-17</div>`)[0];
+                popup_74c630bc55ac13b9dd60244dceaea1c2.setContent(html_711034516fd791416ed40d9ba3b82c71);
+            
+        
+
+        marker_597a5af489ef83355314c30ed798db8e.bindPopup(popup_74c630bc55ac13b9dd60244dceaea1c2)
+        ;
+
+        
+    
+    
+                marker_597a5af489ef83355314c30ed798db8e.setIcon(icon_d42041e5fb362886c750eb55b45a5250);
+            
+    
+            var marker_af7662868f715d92b164c4a596a5a149 = L.marker(
+                [57.7085, 11.9745],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7eedc5ae52b8c710facb20121d5af113 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_39703f393992dbaf46da00abc7e1faca = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_8715ff8a9c16fa80e51c64c0c25f21f3 = $(`<div id="html_8715ff8a9c16fa80e51c64c0c25f21f3" style="width: 100.0%; height: 100.0%;"><b>Regulus regulus</b> (Goldcrest)<br>Observation at (57.7085, 11.9745)<br>Date: 2024-10-18</div>`)[0];
+                popup_39703f393992dbaf46da00abc7e1faca.setContent(html_8715ff8a9c16fa80e51c64c0c25f21f3);
+            
+        
+
+        marker_af7662868f715d92b164c4a596a5a149.bindPopup(popup_39703f393992dbaf46da00abc7e1faca)
+        ;
+
+        
+    
+    
+                marker_af7662868f715d92b164c4a596a5a149.setIcon(icon_7eedc5ae52b8c710facb20121d5af113);
+            
+    
+            var marker_494f8697588d2bf225fab4d93a702785 = L.marker(
+                [57.7105, 11.9765],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_2947a640898d143ab46f03164351da31 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_208078ac68663c0ea77e37be99e445c8 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_0436da73479a7525929660ddbe523f7c = $(`<div id="html_0436da73479a7525929660ddbe523f7c" style="width: 100.0%; height: 100.0%;"><b>Pyrrhula pyrrhula</b> (Eurasian Bullfinch)<br>Observation at (57.7105, 11.9765)<br>Date: 2024-10-19</div>`)[0];
+                popup_208078ac68663c0ea77e37be99e445c8.setContent(html_0436da73479a7525929660ddbe523f7c);
+            
+        
+
+        marker_494f8697588d2bf225fab4d93a702785.bindPopup(popup_208078ac68663c0ea77e37be99e445c8)
+        ;
+
+        
+    
+    
+                marker_494f8697588d2bf225fab4d93a702785.setIcon(icon_2947a640898d143ab46f03164351da31);
+            
+    
+            var marker_f01e71870cd00fc9158fba07d3915984 = L.marker(
+                [55.605, 13.0038],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_3b639d6f7a717fc5c56d2d22bc6d13b5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_826f50382ad6402fc4799eadf7961cf5 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_eff6d4262b57316ee58ee41aff3e3d48 = $(`<div id="html_eff6d4262b57316ee58ee41aff3e3d48" style="width: 100.0%; height: 100.0%;"><b>Emberiza citrinella</b> (Yellowhammer)<br>Observation at (55.6050, 13.0038)<br>Date: 2024-10-20</div>`)[0];
+                popup_826f50382ad6402fc4799eadf7961cf5.setContent(html_eff6d4262b57316ee58ee41aff3e3d48);
+            
+        
+
+        marker_f01e71870cd00fc9158fba07d3915984.bindPopup(popup_826f50382ad6402fc4799eadf7961cf5)
+        ;
+
+        
+    
+    
+                marker_f01e71870cd00fc9158fba07d3915984.setIcon(icon_3b639d6f7a717fc5c56d2d22bc6d13b5);
+            
+    
+            var marker_4dc80cbb270bbb706e99c5b99e0f4bfa = L.marker(
+                [55.607, 13.005],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_9eac63f01643f4996d7d2d4566f64ccc = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_9d0095244f0700c4552b6bcca30b2065 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_c0c32ec0522df94c6b040c81794a92bf = $(`<div id="html_c0c32ec0522df94c6b040c81794a92bf" style="width: 100.0%; height: 100.0%;"><b>Luscinia luscinia</b> (Thrush Nightingale)<br>Observation at (55.6070, 13.0050)<br>Date: 2024-10-21</div>`)[0];
+                popup_9d0095244f0700c4552b6bcca30b2065.setContent(html_c0c32ec0522df94c6b040c81794a92bf);
+            
+        
+
+        marker_4dc80cbb270bbb706e99c5b99e0f4bfa.bindPopup(popup_9d0095244f0700c4552b6bcca30b2065)
+        ;
+
+        
+    
+    
+                marker_4dc80cbb270bbb706e99c5b99e0f4bfa.setIcon(icon_9eac63f01643f4996d7d2d4566f64ccc);
+            
+    
+            var marker_f1af9cd719a6b0901540a3ee35054d03 = L.marker(
+                [55.603, 13.002],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_15b91fb231d0fc7207855d1e68b354c4 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_7231e518c5ae38c8b53dd5ba815c0069 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_9a82eb0493162696b695657d7b44224a = $(`<div id="html_9a82eb0493162696b695657d7b44224a" style="width: 100.0%; height: 100.0%;"><b>Oenanthe oenanthe</b> (Northern Wheatear)<br>Observation at (55.6030, 13.0020)<br>Date: 2024-10-22</div>`)[0];
+                popup_7231e518c5ae38c8b53dd5ba815c0069.setContent(html_9a82eb0493162696b695657d7b44224a);
+            
+        
+
+        marker_f1af9cd719a6b0901540a3ee35054d03.bindPopup(popup_7231e518c5ae38c8b53dd5ba815c0069)
+        ;
+
+        
+    
+    
+                marker_f1af9cd719a6b0901540a3ee35054d03.setIcon(icon_15b91fb231d0fc7207855d1e68b354c4);
+            
+    
+            var marker_92217b591c0abc4d57cc57f2bb15ed3d = L.marker(
+                [55.608, 13.006],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_15cdaf805cf2c6414c238fb63c84db19 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5325637125f9093e88a1c4886ff0e20d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_92d9ceabac92efd1e82c18d2fbb1f453 = $(`<div id="html_92d9ceabac92efd1e82c18d2fbb1f453" style="width: 100.0%; height: 100.0%;"><b>Anthus pratensis</b> (Meadow Pipit)<br>Observation at (55.6080, 13.0060)<br>Date: 2024-10-23</div>`)[0];
+                popup_5325637125f9093e88a1c4886ff0e20d.setContent(html_92d9ceabac92efd1e82c18d2fbb1f453);
+            
+        
+
+        marker_92217b591c0abc4d57cc57f2bb15ed3d.bindPopup(popup_5325637125f9093e88a1c4886ff0e20d)
+        ;
+
+        
+    
+    
+                marker_92217b591c0abc4d57cc57f2bb15ed3d.setIcon(icon_15cdaf805cf2c6414c238fb63c84db19);
+            
+    
+            var marker_d658bd358978a3ca95d7b9615c7e1deb = L.marker(
+                [55.6045, 13.0035],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_e5a7bee5d7c73e602b31f898c8fceb3d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ad6448e80963b634eabfd5be31773dc7 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4a5c5a1b124f0e81b9be97171437296f = $(`<div id="html_4a5c5a1b124f0e81b9be97171437296f" style="width: 100.0%; height: 100.0%;"><b>Alauda arvensis</b> (Eurasian Skylark)<br>Observation at (55.6045, 13.0035)<br>Date: 2024-10-24</div>`)[0];
+                popup_ad6448e80963b634eabfd5be31773dc7.setContent(html_4a5c5a1b124f0e81b9be97171437296f);
+            
+        
+
+        marker_d658bd358978a3ca95d7b9615c7e1deb.bindPopup(popup_ad6448e80963b634eabfd5be31773dc7)
+        ;
+
+        
+    
+    
+                marker_d658bd358978a3ca95d7b9615c7e1deb.setIcon(icon_e5a7bee5d7c73e602b31f898c8fceb3d);
+            
+    
+            var marker_8113fcb8865b9f303ced1107b81cd43b = L.marker(
+                [55.6065, 13.0055],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_b6ba549a8caaaaec4f499b48aa9260e8 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8086acce134444c37e91979837c0c39c = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_e43de4a91e054d3520116887ea99866b = $(`<div id="html_e43de4a91e054d3520116887ea99866b" style="width: 100.0%; height: 100.0%;"><b>Hirundo rustica</b> (Barn Swallow)<br>Observation at (55.6065, 13.0055)<br>Date: 2024-10-25</div>`)[0];
+                popup_8086acce134444c37e91979837c0c39c.setContent(html_e43de4a91e054d3520116887ea99866b);
+            
+        
+
+        marker_8113fcb8865b9f303ced1107b81cd43b.bindPopup(popup_8086acce134444c37e91979837c0c39c)
+        ;
+
+        
+    
+    
+                marker_8113fcb8865b9f303ced1107b81cd43b.setIcon(icon_b6ba549a8caaaaec4f499b48aa9260e8);
+            
+    
+            var marker_fdd8d52c85e04da275a7f038b01ed1ab = L.marker(
+                [55.6055, 13.0045],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_cc076866a86018ae9504064ac09577e2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d2d716edad1329ca1ae71e7ad6ef46ea = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_cc002799d54b764c6b6e622c8b931068 = $(`<div id="html_cc002799d54b764c6b6e622c8b931068" style="width: 100.0%; height: 100.0%;"><b>Delichon urbicum</b> (Common House Martin)<br>Observation at (55.6055, 13.0045)<br>Date: 2024-10-26</div>`)[0];
+                popup_d2d716edad1329ca1ae71e7ad6ef46ea.setContent(html_cc002799d54b764c6b6e622c8b931068);
+            
+        
+
+        marker_fdd8d52c85e04da275a7f038b01ed1ab.bindPopup(popup_d2d716edad1329ca1ae71e7ad6ef46ea)
+        ;
+
+        
+    
+    
+                marker_fdd8d52c85e04da275a7f038b01ed1ab.setIcon(icon_cc076866a86018ae9504064ac09577e2);
+            
+    
+            var marker_e05f1a57ce4340b2b396aa872aae23a3 = L.marker(
+                [55.604, 13.003],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_9fda8615f3ca48f083953c65eebe2e41 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a9b0bba0a3be58557a0cb3f07979ec86 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_07077aa99246ed0a7764a449624dabf2 = $(`<div id="html_07077aa99246ed0a7764a449624dabf2" style="width: 100.0%; height: 100.0%;"><b>Muscicapa striata</b> (Spotted Flycatcher)<br>Observation at (55.6040, 13.0030)<br>Date: 2024-10-27</div>`)[0];
+                popup_a9b0bba0a3be58557a0cb3f07979ec86.setContent(html_07077aa99246ed0a7764a449624dabf2);
+            
+        
+
+        marker_e05f1a57ce4340b2b396aa872aae23a3.bindPopup(popup_a9b0bba0a3be58557a0cb3f07979ec86)
+        ;
+
+        
+    
+    
+                marker_e05f1a57ce4340b2b396aa872aae23a3.setIcon(icon_9fda8615f3ca48f083953c65eebe2e41);
+            
+    
+            var marker_5c9b79fcea90a350d517c2783aa37509 = L.marker(
+                [55.6075, 13.0058],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_f1cc13071bcb21e2a20a6a9115614878 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_8880ccad00f42965f0f2b45e72e775cc = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_93b0037cffa31b387cef66976c5e165f = $(`<div id="html_93b0037cffa31b387cef66976c5e165f" style="width: 100.0%; height: 100.0%;"><b>Sylvia borin</b> (Garden Warbler)<br>Observation at (55.6075, 13.0058)<br>Date: 2024-10-28</div>`)[0];
+                popup_8880ccad00f42965f0f2b45e72e775cc.setContent(html_93b0037cffa31b387cef66976c5e165f);
+            
+        
+
+        marker_5c9b79fcea90a350d517c2783aa37509.bindPopup(popup_8880ccad00f42965f0f2b45e72e775cc)
+        ;
+
+        
+    
+    
+                marker_5c9b79fcea90a350d517c2783aa37509.setIcon(icon_f1cc13071bcb21e2a20a6a9115614878);
+            
+    
+            var marker_f7e015ed0c8020f7bdbac68416b58f53 = L.marker(
+                [55.606, 13.0048],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7af580a17d05c51e730abbac386e9172 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_071a60c90aeb0213afb2cbf73c128eff = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_841fe6223b64786a0361778614351743 = $(`<div id="html_841fe6223b64786a0361778614351743" style="width: 100.0%; height: 100.0%;"><b>Phoenicurus phoenicurus</b> (Common Redstart)<br>Observation at (55.6060, 13.0048)<br>Date: 2024-10-29</div>`)[0];
+                popup_071a60c90aeb0213afb2cbf73c128eff.setContent(html_841fe6223b64786a0361778614351743);
+            
+        
+
+        marker_f7e015ed0c8020f7bdbac68416b58f53.bindPopup(popup_071a60c90aeb0213afb2cbf73c128eff)
+        ;
+
+        
+    
+    
+                marker_f7e015ed0c8020f7bdbac68416b58f53.setIcon(icon_7af580a17d05c51e730abbac386e9172);
+            
+    
+            var marker_71f696b0649dae794289a5ef21095d9c = L.marker(
+                [59.8586, 17.6389],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_196d1ee9e017e75ab8d97a9f194eb01e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d3396a958e2054bd937f39f266ed3be3 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b158ae8fb4660a7072e552c8d933a3c2 = $(`<div id="html_b158ae8fb4660a7072e552c8d933a3c2" style="width: 100.0%; height: 100.0%;"><b>Parus major</b> (Great Tit)<br>Observation at (59.8586, 17.6389)<br>Date: 2024-10-15</div>`)[0];
+                popup_d3396a958e2054bd937f39f266ed3be3.setContent(html_b158ae8fb4660a7072e552c8d933a3c2);
+            
+        
+
+        marker_71f696b0649dae794289a5ef21095d9c.bindPopup(popup_d3396a958e2054bd937f39f266ed3be3)
+        ;
+
+        
+    
+    
+                marker_71f696b0649dae794289a5ef21095d9c.setIcon(icon_196d1ee9e017e75ab8d97a9f194eb01e);
+            
+    
+            var marker_c5933623cff8c52624953b0b8e42165e = L.marker(
+                [59.86, 17.64],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_692d2752032b32e97dcda913e4c8374e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_db6661660f217f837603f8ded5edb5c9 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_d1266cd1325ca11ff4ffc4ad736a252d = $(`<div id="html_d1266cd1325ca11ff4ffc4ad736a252d" style="width: 100.0%; height: 100.0%;"><b>Turdus merula</b> (Common Blackbird)<br>Observation at (59.8600, 17.6400)<br>Date: 2024-10-16</div>`)[0];
+                popup_db6661660f217f837603f8ded5edb5c9.setContent(html_d1266cd1325ca11ff4ffc4ad736a252d);
+            
+        
+
+        marker_c5933623cff8c52624953b0b8e42165e.bindPopup(popup_db6661660f217f837603f8ded5edb5c9)
+        ;
+
+        
+    
+    
+                marker_c5933623cff8c52624953b0b8e42165e.setIcon(icon_692d2752032b32e97dcda913e4c8374e);
+            
+    
+            var marker_44e83bdf49b71258c856be8ece334f22 = L.marker(
+                [59.857, 17.637],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_058bfc6e31a5229d136f2959de4d8279 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_0fc19d922a79e540dcb3f16e4c1fb9d2 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_371493fc4dc3e78e5c8604bd5c59d85d = $(`<div id="html_371493fc4dc3e78e5c8604bd5c59d85d" style="width: 100.0%; height: 100.0%;"><b>Passer domesticus</b> (House Sparrow)<br>Observation at (59.8570, 17.6370)<br>Date: 2024-10-17</div>`)[0];
+                popup_0fc19d922a79e540dcb3f16e4c1fb9d2.setContent(html_371493fc4dc3e78e5c8604bd5c59d85d);
+            
+        
+
+        marker_44e83bdf49b71258c856be8ece334f22.bindPopup(popup_0fc19d922a79e540dcb3f16e4c1fb9d2)
+        ;
+
+        
+    
+    
+                marker_44e83bdf49b71258c856be8ece334f22.setIcon(icon_058bfc6e31a5229d136f2959de4d8279);
+            
+    
+            var marker_9558b06f9723cfd75ffc92a16cbc8ee9 = L.marker(
+                [59.859, 17.6395],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_1ec28df5a17be37dff4dc15c82d61020 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5c925f9df601ce290626fc702946f023 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_f5ed4ecffe26b79a248ca16ff2aca98f = $(`<div id="html_f5ed4ecffe26b79a248ca16ff2aca98f" style="width: 100.0%; height: 100.0%;"><b>Fringilla coelebs</b> (Common Chaffinch)<br>Observation at (59.8590, 17.6395)<br>Date: 2024-10-18</div>`)[0];
+                popup_5c925f9df601ce290626fc702946f023.setContent(html_f5ed4ecffe26b79a248ca16ff2aca98f);
+            
+        
+
+        marker_9558b06f9723cfd75ffc92a16cbc8ee9.bindPopup(popup_5c925f9df601ce290626fc702946f023)
+        ;
+
+        
+    
+    
+                marker_9558b06f9723cfd75ffc92a16cbc8ee9.setIcon(icon_1ec28df5a17be37dff4dc15c82d61020);
+            
+    
+            var marker_c85165156e09aea50a6b945882c585a0 = L.marker(
+                [59.858, 17.6385],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_1265c5bcd666b79788436c3cf2ff1468 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_ba98fbed23d756e8f02162dc1a331f32 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_a10838a9056b57fc4981b26dcccd370a = $(`<div id="html_a10838a9056b57fc4981b26dcccd370a" style="width: 100.0%; height: 100.0%;"><b>Erithacus rubecula</b> (European Robin)<br>Observation at (59.8580, 17.6385)<br>Date: 2024-10-19</div>`)[0];
+                popup_ba98fbed23d756e8f02162dc1a331f32.setContent(html_a10838a9056b57fc4981b26dcccd370a);
+            
+        
+
+        marker_c85165156e09aea50a6b945882c585a0.bindPopup(popup_ba98fbed23d756e8f02162dc1a331f32)
+        ;
+
+        
+    
+    
+                marker_c85165156e09aea50a6b945882c585a0.setIcon(icon_1265c5bcd666b79788436c3cf2ff1468);
+            
+    
+            var marker_5f2b33f6af19e15b3f6f7f7c43fdf9d2 = L.marker(
+                [56.0465, 16.1932],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_879dc06366f0d15a2a26103b9809c02a = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b633125a78d54a786b8ea7b197cc382d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ead415b9c40be46c96034472876a104e = $(`<div id="html_ead415b9c40be46c96034472876a104e" style="width: 100.0%; height: 100.0%;"><b>Phylloscopus trochilus</b> (Willow Warbler)<br>Observation at (56.0465, 16.1932)<br>Date: 2024-10-20</div>`)[0];
+                popup_b633125a78d54a786b8ea7b197cc382d.setContent(html_ead415b9c40be46c96034472876a104e);
+            
+        
+
+        marker_5f2b33f6af19e15b3f6f7f7c43fdf9d2.bindPopup(popup_b633125a78d54a786b8ea7b197cc382d)
+        ;
+
+        
+    
+    
+                marker_5f2b33f6af19e15b3f6f7f7c43fdf9d2.setIcon(icon_879dc06366f0d15a2a26103b9809c02a);
+            
+    
+            var marker_1561bd2903722af50e52d035f758c723 = L.marker(
+                [58.4108, 15.6214],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_e4abc9a1dd6f23fc5b0eb65d29a76eb5 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_42340659806885d8fd90f4e2dd33ab99 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_3edba35556525cd7517d12992c779a9d = $(`<div id="html_3edba35556525cd7517d12992c779a9d" style="width: 100.0%; height: 100.0%;"><b>Carduelis chloris</b> (European Greenfinch)<br>Observation at (58.4108, 15.6214)<br>Date: 2024-10-21</div>`)[0];
+                popup_42340659806885d8fd90f4e2dd33ab99.setContent(html_3edba35556525cd7517d12992c779a9d);
+            
+        
+
+        marker_1561bd2903722af50e52d035f758c723.bindPopup(popup_42340659806885d8fd90f4e2dd33ab99)
+        ;
+
+        
+    
+    
+                marker_1561bd2903722af50e52d035f758c723.setIcon(icon_e4abc9a1dd6f23fc5b0eb65d29a76eb5);
+            
+    
+            var marker_85d1c06ad30cfc8e9bd4544c2f0963f0 = L.marker(
+                [60.6748, 17.1413],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_2e85b1a3eb7754344af0f9cb891c5142 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_13c8c769adb4787a7472917638bed161 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ecc80ab25a284f75177ade92fbb6df43 = $(`<div id="html_ecc80ab25a284f75177ade92fbb6df43" style="width: 100.0%; height: 100.0%;"><b>Sturnus vulgaris</b> (Common Starling)<br>Observation at (60.6748, 17.1413)<br>Date: 2024-10-22</div>`)[0];
+                popup_13c8c769adb4787a7472917638bed161.setContent(html_ecc80ab25a284f75177ade92fbb6df43);
+            
+        
+
+        marker_85d1c06ad30cfc8e9bd4544c2f0963f0.bindPopup(popup_13c8c769adb4787a7472917638bed161)
+        ;
+
+        
+    
+    
+                marker_85d1c06ad30cfc8e9bd4544c2f0963f0.setIcon(icon_2e85b1a3eb7754344af0f9cb891c5142);
+            
+    
+            var marker_50313e1e87627aa42a3acdd7fb18c717 = L.marker(
+                [62.3908, 20.2639],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_cb7452c0adef94b42267b6106187050d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_195272bb43b4a4875ef492074e98da65 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_4879bf21c588c7b9ee4bb09bbf857fd4 = $(`<div id="html_4879bf21c588c7b9ee4bb09bbf857fd4" style="width: 100.0%; height: 100.0%;"><b>Corvus cornix</b> (Hooded Crow)<br>Observation at (62.3908, 20.2639)<br>Date: 2024-10-23</div>`)[0];
+                popup_195272bb43b4a4875ef492074e98da65.setContent(html_4879bf21c588c7b9ee4bb09bbf857fd4);
+            
+        
+
+        marker_50313e1e87627aa42a3acdd7fb18c717.bindPopup(popup_195272bb43b4a4875ef492074e98da65)
+        ;
+
+        
+    
+    
+                marker_50313e1e87627aa42a3acdd7fb18c717.setIcon(icon_cb7452c0adef94b42267b6106187050d);
+            
+    
+            var marker_1cb17696c05d8d1b673ba2d9de5437ba = L.marker(
+                [63.8258, 20.263],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_520c065008607fbb996b8817b33c144d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_440df193c59885c383e7a85a49fde7f0 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ef9ac66b2c696c25c5769a445f536e20 = $(`<div id="html_ef9ac66b2c696c25c5769a445f536e20" style="width: 100.0%; height: 100.0%;"><b>Motacilla alba</b> (White Wagtail)<br>Observation at (63.8258, 20.2630)<br>Date: 2024-10-24</div>`)[0];
+                popup_440df193c59885c383e7a85a49fde7f0.setContent(html_ef9ac66b2c696c25c5769a445f536e20);
+            
+        
+
+        marker_1cb17696c05d8d1b673ba2d9de5437ba.bindPopup(popup_440df193c59885c383e7a85a49fde7f0)
+        ;
+
+        
+    
+    
+                marker_1cb17696c05d8d1b673ba2d9de5437ba.setIcon(icon_520c065008607fbb996b8817b33c144d);
+            
+    
+            var marker_53d06d13b75865d5e767b493eb0c1d6c = L.marker(
+                [57.7826, 14.1562],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_7b27bb29af9f6ba2e53455dd033cffaf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_963bccda80d0686b20e3ac6267495343 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_2e1beb008432961edcbae09bc3751907 = $(`<div id="html_2e1beb008432961edcbae09bc3751907" style="width: 100.0%; height: 100.0%;"><b>Pica pica</b> (Eurasian Magpie)<br>Observation at (57.7826, 14.1562)<br>Date: 2024-10-25</div>`)[0];
+                popup_963bccda80d0686b20e3ac6267495343.setContent(html_2e1beb008432961edcbae09bc3751907);
+            
+        
+
+        marker_53d06d13b75865d5e767b493eb0c1d6c.bindPopup(popup_963bccda80d0686b20e3ac6267495343)
+        ;
+
+        
+    
+    
+                marker_53d06d13b75865d5e767b493eb0c1d6c.setIcon(icon_7b27bb29af9f6ba2e53455dd033cffaf);
+            
+    
+            var marker_15ddbec866c4a71c0479d2bedb318059 = L.marker(
+                [56.8791, 14.8059],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_0e1ca22ef8bd606550bbf1d76622b481 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_81cc8f9ac957f3e7d7ef7f8f96b28b6b = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_e5ef17d292e8ffa57acfe0ed6df70167 = $(`<div id="html_e5ef17d292e8ffa57acfe0ed6df70167" style="width: 100.0%; height: 100.0%;"><b>Garrulus glandarius</b> (Eurasian Jay)<br>Observation at (56.8791, 14.8059)<br>Date: 2024-10-26</div>`)[0];
+                popup_81cc8f9ac957f3e7d7ef7f8f96b28b6b.setContent(html_e5ef17d292e8ffa57acfe0ed6df70167);
+            
+        
+
+        marker_15ddbec866c4a71c0479d2bedb318059.bindPopup(popup_81cc8f9ac957f3e7d7ef7f8f96b28b6b)
+        ;
+
+        
+    
+    
+                marker_15ddbec866c4a71c0479d2bedb318059.setIcon(icon_0e1ca22ef8bd606550bbf1d76622b481);
+            
+    
+            var marker_ba0b77f8d1e5b3319a7ecacd1cbd7b13 = L.marker(
+                [59.2753, 17.941],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_4322fe9a3fb220504ca4f644913a2737 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_9d431881fccaa51f6123cb1e3d6e1119 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_eeaac5f5a87e614e1261d1201915f359 = $(`<div id="html_eeaac5f5a87e614e1261d1201915f359" style="width: 100.0%; height: 100.0%;"><b>Columba palumbus</b> (Common Wood Pigeon)<br>Observation at (59.2753, 17.9410)<br>Date: 2024-10-27</div>`)[0];
+                popup_9d431881fccaa51f6123cb1e3d6e1119.setContent(html_eeaac5f5a87e614e1261d1201915f359);
+            
+        
+
+        marker_ba0b77f8d1e5b3319a7ecacd1cbd7b13.bindPopup(popup_9d431881fccaa51f6123cb1e3d6e1119)
+        ;
+
+        
+    
+    
+                marker_ba0b77f8d1e5b3319a7ecacd1cbd7b13.setIcon(icon_4322fe9a3fb220504ca4f644913a2737);
+            
+    
+            var marker_37a146ecd04f04ff42cef7c78d1cd5eb = L.marker(
+                [58.591, 16.1826],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_6b3b9990ab5a6bac0f8aac3a101e23d4 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_e71df3adc1ef9b49eb47e2c50fb2603d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_b85bff4bee8b32d9dffefaa3e5e0acb5 = $(`<div id="html_b85bff4bee8b32d9dffefaa3e5e0acb5" style="width: 100.0%; height: 100.0%;"><b>Dendrocopos major</b> (Great Spotted Woodpecker)<br>Observation at (58.5910, 16.1826)<br>Date: 2024-10-28</div>`)[0];
+                popup_e71df3adc1ef9b49eb47e2c50fb2603d.setContent(html_b85bff4bee8b32d9dffefaa3e5e0acb5);
+            
+        
+
+        marker_37a146ecd04f04ff42cef7c78d1cd5eb.bindPopup(popup_e71df3adc1ef9b49eb47e2c50fb2603d)
+        ;
+
+        
+    
+    
+                marker_37a146ecd04f04ff42cef7c78d1cd5eb.setIcon(icon_6b3b9990ab5a6bac0f8aac3a101e23d4);
+            
+    
+            var marker_1e5222de5eae2d5a9109d203bbe1dc8d = L.marker(
+                [57.4917, 15.5827],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_06a6dec4317d4540c3a29e83f90655e4 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6bb7b7ca90046ed00909f98d9207ddca = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ac2f529d41418b06e1a9b1b81eb39ba8 = $(`<div id="html_ac2f529d41418b06e1a9b1b81eb39ba8" style="width: 100.0%; height: 100.0%;"><b>Sitta europaea</b> (Eurasian Nuthatch)<br>Observation at (57.4917, 15.5827)<br>Date: 2024-10-29</div>`)[0];
+                popup_6bb7b7ca90046ed00909f98d9207ddca.setContent(html_ac2f529d41418b06e1a9b1b81eb39ba8);
+            
+        
+
+        marker_1e5222de5eae2d5a9109d203bbe1dc8d.bindPopup(popup_6bb7b7ca90046ed00909f98d9207ddca)
+        ;
+
+        
+    
+    
+                marker_1e5222de5eae2d5a9109d203bbe1dc8d.setIcon(icon_06a6dec4317d4540c3a29e83f90655e4);
+            
+    
+            var marker_e8e1a2ca4e25b421607006988de62f5a = L.marker(
+                [56.6787, 16.3618],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_05278656f873ba88ae7861ac070c0407 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3794315a304af55c960119cd37ec11cd = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_f7a81bdc4feee8c4da2c656903bfcf1a = $(`<div id="html_f7a81bdc4feee8c4da2c656903bfcf1a" style="width: 100.0%; height: 100.0%;"><b>Cyanistes caeruleus</b> (Eurasian Blue Tit)<br>Observation at (56.6787, 16.3618)<br>Date: 2024-10-15</div>`)[0];
+                popup_3794315a304af55c960119cd37ec11cd.setContent(html_f7a81bdc4feee8c4da2c656903bfcf1a);
+            
+        
+
+        marker_e8e1a2ca4e25b421607006988de62f5a.bindPopup(popup_3794315a304af55c960119cd37ec11cd)
+        ;
+
+        
+    
+    
+                marker_e8e1a2ca4e25b421607006988de62f5a.setIcon(icon_05278656f873ba88ae7861ac070c0407);
+            
+    
+            var marker_0e901c2e1c54e36c2090979d5997a4f0 = L.marker(
+                [58.2706, 12.945],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_5de215e9dd0cf8d0cf7ddefbe81f13ff = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_fd3dd95f4ad829730433bcd667533424 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_110a5c6a6a2d411f71a43cecbb857b7e = $(`<div id="html_110a5c6a6a2d411f71a43cecbb857b7e" style="width: 100.0%; height: 100.0%;"><b>Troglodytes troglodytes</b> (Eurasian Wren)<br>Observation at (58.2706, 12.9450)<br>Date: 2024-10-16</div>`)[0];
+                popup_fd3dd95f4ad829730433bcd667533424.setContent(html_110a5c6a6a2d411f71a43cecbb857b7e);
+            
+        
+
+        marker_0e901c2e1c54e36c2090979d5997a4f0.bindPopup(popup_fd3dd95f4ad829730433bcd667533424)
+        ;
+
+        
+    
+    
+                marker_0e901c2e1c54e36c2090979d5997a4f0.setIcon(icon_5de215e9dd0cf8d0cf7ddefbe81f13ff);
+            
+    
+            var marker_6742c1bceab0a08e109b1fe15c28715f = L.marker(
+                [59.6562, 16.7748],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_c5b2f63c905ea4f1634c6716e3e89b84 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5ee440ebd9e720612eab301a9e54040e = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ed30596af12b0f933692d3d630493850 = $(`<div id="html_ed30596af12b0f933692d3d630493850" style="width: 100.0%; height: 100.0%;"><b>Aegithalos caudatus</b> (Long-tailed Tit)<br>Observation at (59.6562, 16.7748)<br>Date: 2024-10-17</div>`)[0];
+                popup_5ee440ebd9e720612eab301a9e54040e.setContent(html_ed30596af12b0f933692d3d630493850);
+            
+        
+
+        marker_6742c1bceab0a08e109b1fe15c28715f.bindPopup(popup_5ee440ebd9e720612eab301a9e54040e)
+        ;
+
+        
+    
+    
+                marker_6742c1bceab0a08e109b1fe15c28715f.setIcon(icon_c5b2f63c905ea4f1634c6716e3e89b84);
+            
+    
+            var marker_e78c4dd55c23eab8fd457b28e0f5a0a6 = L.marker(
+                [57.1512, 12.7066],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_610baae18abb431cef84060ad171a0f6 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_bb25b0ecf49a537f3efc1c73ba82c239 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_852f263264a034a598866fbb223a03db = $(`<div id="html_852f263264a034a598866fbb223a03db" style="width: 100.0%; height: 100.0%;"><b>Regulus regulus</b> (Goldcrest)<br>Observation at (57.1512, 12.7066)<br>Date: 2024-10-18</div>`)[0];
+                popup_bb25b0ecf49a537f3efc1c73ba82c239.setContent(html_852f263264a034a598866fbb223a03db);
+            
+        
+
+        marker_e78c4dd55c23eab8fd457b28e0f5a0a6.bindPopup(popup_bb25b0ecf49a537f3efc1c73ba82c239)
+        ;
+
+        
+    
+    
+                marker_e78c4dd55c23eab8fd457b28e0f5a0a6.setIcon(icon_610baae18abb431cef84060ad171a0f6);
+            
+    
+            var marker_8bb7cdb9e7771c1ab32e8b1e6d69c998 = L.marker(
+                [55.8657, 13.5354],
+                {
+}
+            ).addTo(marker_cluster_e31eb916b12f8d10bbc19c50be1c2075);
+        
+    
+            var icon_620a6bf3b265b9729295b768a7ebf457 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "info-sign",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_3664c96ca14ab1eac157940844db756d = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_feb6a70bbbfbd46c457a306d117cf7a9 = $(`<div id="html_feb6a70bbbfbd46c457a306d117cf7a9" style="width: 100.0%; height: 100.0%;"><b>Pyrrhula pyrrhula</b> (Eurasian Bullfinch)<br>Observation at (55.8657, 13.5354)<br>Date: 2024-10-19</div>`)[0];
+                popup_3664c96ca14ab1eac157940844db756d.setContent(html_feb6a70bbbfbd46c457a306d117cf7a9);
+            
+        
+
+        marker_8bb7cdb9e7771c1ab32e8b1e6d69c998.bindPopup(popup_3664c96ca14ab1eac157940844db756d)
+        ;
+
+        
+    
+    
+                marker_8bb7cdb9e7771c1ab32e8b1e6d69c998.setIcon(icon_620a6bf3b265b9729295b768a7ebf457);
+            
+    
+            marker_cluster_e31eb916b12f8d10bbc19c50be1c2075.addTo(map_f3e0c40fd0de39ecb7e0badf1a246012);
+        
+    
+            var layer_control_b0e1eabd9a8692299ce11ce05a781cd4_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_dfe4c46e0d54d9c4607b06a5d6056d61,
+                },
+                overlays :  {
+                    "Observations" : marker_cluster_e31eb916b12f8d10bbc19c50be1c2075,
+                },
+            };
+            let layer_control_b0e1eabd9a8692299ce11ce05a781cd4 = L.control.layers(
+                layer_control_b0e1eabd9a8692299ce11ce05a781cd4_layers.base_layers,
+                layer_control_b0e1eabd9a8692299ce11ce05a781cd4_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_f3e0c40fd0de39ecb7e0badf1a246012);
+
+        
+</script>
+</html>
