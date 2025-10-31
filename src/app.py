@@ -5,6 +5,9 @@ from datetime import datetime, timedelta, date
 from typing import Optional, List, Dict, Any
 import sys
 from pathlib import Path
+import folium
+from folium.plugins import MarkerCluster
+from streamlit_folium import st_folium
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -51,6 +54,74 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         formatted['longitude'] = record['decimalLongitude']
 
     return formatted
+
+
+def create_clustered_map(df: pd.DataFrame) -> folium.Map:
+    """Create a Folium map with clustered markers for observations.
+
+    Args:
+        df: DataFrame containing observation data with latitude/longitude columns
+
+    Returns:
+        A folium.Map object with clustered markers
+    """
+    # Filter for valid coordinates
+    map_data = df[['latitude', 'longitude']].dropna()
+
+    if map_data.empty:
+        return None
+
+    # Calculate map center
+    center_lat = map_data['latitude'].mean()
+    center_lon = map_data['longitude'].mean()
+
+    # Create map centered on observations
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=6,
+        tiles='OpenStreetMap'
+    )
+
+    # Create marker cluster
+    marker_cluster = MarkerCluster(
+        name='Observations',
+        overlay=True,
+        control=True,
+        show=True
+    ).add_to(m)
+
+    # Add markers to cluster
+    for idx, row in map_data.iterrows():
+        # Get additional information for popup if available
+        popup_text = f"Observation at ({row['latitude']:.4f}, {row['longitude']:.4f})"
+
+        # Try to add species information if available in the dataframe
+        if 'Scientific Name' in df.columns:
+            species_name = df.loc[idx, 'Scientific Name']
+            if pd.notna(species_name):
+                popup_text = f"<b>{species_name}</b><br>" + popup_text
+
+        if 'Common Name' in df.columns:
+            common_name = df.loc[idx, 'Common Name']
+            if pd.notna(common_name) and common_name != 'N/A':
+                popup_text = popup_text.replace('<br>', f" ({common_name})<br>")
+
+        if 'Date' in df.columns:
+            obs_date = df.loc[idx, 'Date']
+            if pd.notna(obs_date):
+                popup_text += f"<br>Date: {obs_date}"
+
+        # Add marker to cluster
+        folium.Marker(
+            location=[row['latitude'], row['longitude']],
+            popup=folium.Popup(popup_text, max_width=300),
+            icon=folium.Icon(color='blue', icon='info-sign')
+        ).add_to(marker_cluster)
+
+    # Add layer control
+    folium.LayerControl().add_to(m)
+
+    return m
 
 
 def display_about_section():
@@ -193,7 +264,8 @@ def display_observations():
         **Features:**
         - 🔍 Search 116+ million observations
         - 📅 Filter by year, month, and location
-        - 🗺️ View observations on an interactive map
+        - 🗺️ View observations on an interactive map with clustering
+        - 📍 Automatic grouping of nearby observations for better visualization
         - 💾 Download data as CSV
         - 🌍 **No API key required** - completely free!
 
@@ -262,12 +334,27 @@ def display_observations():
 
         # Display map if coordinates are available
         if 'latitude' in df.columns and 'longitude' in df.columns:
-            map_data = df[['latitude', 'longitude']].dropna()
-            if not map_data.empty:
-                st.subheader("Observation Locations")
-                # Ensure column names are lowercase for st.map()
-                map_data.columns = ['latitude', 'longitude']
-                st.map(map_data)
+            st.subheader("Observation Locations")
+
+            # Create clustered map
+            clustered_map = create_clustered_map(df)
+
+            if clustered_map is not None:
+                # Display the map with clustering
+                st_folium(
+                    clustered_map,
+                    width=None,  # Use full container width
+                    height=600,
+                    returned_objects=[]  # Don't track user interactions
+                )
+
+                # Add info about clustering
+                st.info(
+                    "🗺️ **Interactive Map with Clustering**: "
+                    "Nearby observations are automatically grouped together. "
+                    "Click on cluster circles to zoom in and see individual observations. "
+                    "Click on markers to see observation details."
+                )
             else:
                 st.info("No coordinate data available for mapping.")
 
