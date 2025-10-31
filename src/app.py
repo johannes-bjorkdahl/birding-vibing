@@ -10,19 +10,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import Config
-from src.api_client import ArtdatabankenAPIClient
+from src.api_client import GBIFAPIClient
 
 
 def init_session_state():
     """Initialize session state variables."""
     if 'api_client' not in st.session_state:
-        if Config.is_configured():
-            st.session_state.api_client = ArtdatabankenAPIClient(
-                Config.API_KEY,
-                Config.API_BASE_URL
-            )
-        else:
-            st.session_state.api_client = None
+        st.session_state.api_client = GBIFAPIClient(
+            Config.GBIF_API_BASE_URL,
+            Config.DATASET_KEY
+        )
 
     if 'observations_data' not in st.session_state:
         st.session_state.observations_data = None
@@ -33,119 +30,121 @@ def init_session_state():
 
 def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """Format a single observation record for display."""
-    # Extract key fields from the observation record
-    # Note: Field names may vary based on API response structure
     formatted = {
-        'Date': record.get('event', {}).get('startDate', 'N/A'),
-        'Species': record.get('taxon', {}).get('scientificName', 'N/A'),
-        'Common Name': record.get('taxon', {}).get('vernacularName', 'N/A'),
-        'Location': record.get('location', {}).get('locality', 'N/A'),
+        'Date': record.get('eventDate', 'N/A'),
+        'Year': record.get('year', 'N/A'),
+        'Month': record.get('month', 'N/A'),
+        'Day': record.get('day', 'N/A'),
+        'Scientific Name': record.get('species', record.get('scientificName', 'N/A')),
+        'Common Name': record.get('vernacularName', 'N/A'),
+        'Locality': record.get('locality', 'N/A'),
+        'State/Province': record.get('stateProvince', 'N/A'),
+        'Country': record.get('countryCode', 'N/A'),
         'Observer': record.get('recordedBy', 'N/A'),
-        'Count': record.get('occurrence', {}).get('individualCount', 'N/A'),
+        'Individual Count': record.get('individualCount', 'N/A'),
+        'Basis of Record': record.get('basisOfRecord', 'N/A'),
     }
 
     # Add coordinates if available
-    if 'location' in record and 'decimalLatitude' in record['location']:
-        formatted['Latitude'] = record['location'].get('decimalLatitude')
-        formatted['Longitude'] = record['location'].get('decimalLongitude')
+    if record.get('decimalLatitude') and record.get('decimalLongitude'):
+        formatted['Latitude'] = record['decimalLatitude']
+        formatted['Longitude'] = record['decimalLongitude']
 
     return formatted
 
 
-def display_api_configuration():
-    """Display API configuration section."""
-    st.sidebar.header("API Configuration")
+def display_about_section():
+    """Display information about the dataset."""
+    st.sidebar.header("About the Data")
 
-    if Config.is_configured():
-        st.sidebar.success("API Key configured")
+    with st.sidebar.expander("Dataset Information"):
+        st.markdown("""
+        **Artportalen - Swedish Species Observation System**
 
-        # Allow manual API key input to override
-        with st.sidebar.expander("Override API Key"):
-            manual_key = st.text_input(
-                "API Key",
-                type="password",
-                help="Enter your Artdatabanken API key"
-            )
-            if st.button("Update API Key"):
-                if manual_key:
-                    st.session_state.api_client = ArtdatabankenAPIClient(
-                        manual_key,
-                        Config.API_BASE_URL
-                    )
-                    st.success("API key updated!")
-                    st.rerun()
-    else:
-        st.sidebar.warning("API Key not configured")
-        st.sidebar.info(
-            "To use this application, you need an API key from Artdatabanken. "
-            "Visit https://api-portal.artdatabanken.se/ to sign up and get your key."
-        )
+        - **116+ million** observations
+        - **Weekly updates** from GBIF
+        - **Open data** (CC0 license)
+        - Managed by SLU Artdatabanken
 
-        manual_key = st.sidebar.text_input(
-            "Enter API Key",
-            type="password",
-            help="Paste your Artdatabanken API key here"
-        )
+        **No API key required!**
+        This app uses the public GBIF API.
+        """)
 
-        if st.sidebar.button("Set API Key"):
-            if manual_key:
-                st.session_state.api_client = ArtdatabankenAPIClient(
-                    manual_key,
-                    Config.API_BASE_URL
-                )
-                st.sidebar.success("API key set! You can now search for observations.")
-                st.rerun()
-            else:
-                st.sidebar.error("Please enter a valid API key")
+        if st.button("View Dataset on GBIF"):
+            st.markdown(f"[Open GBIF Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})")
 
 
 def display_search_filters():
     """Display search filters and return search parameters."""
     st.sidebar.header("Search Filters")
 
-    # Date range
-    st.sidebar.subheader("Date Range")
+    # Year range
+    st.sidebar.subheader("Time Period")
+    current_year = datetime.now().year
+
     date_option = st.sidebar.radio(
-        "Select date range",
-        ["Last 7 days", "Last 30 days", "Custom range", "All time"]
+        "Select time period",
+        ["Current year", "Last 5 years", "Custom range", "All time"]
     )
 
-    start_date = None
-    end_date = None
+    start_year = None
+    end_year = None
+    month = None
 
-    if date_option == "Last 7 days":
-        start_date = date.today() - timedelta(days=7)
-        end_date = date.today()
-    elif date_option == "Last 30 days":
-        start_date = date.today() - timedelta(days=30)
-        end_date = date.today()
+    if date_option == "Current year":
+        start_year = current_year
+        end_year = current_year
+    elif date_option == "Last 5 years":
+        start_year = current_year - 5
+        end_year = current_year
     elif date_option == "Custom range":
         col1, col2 = st.sidebar.columns(2)
         with col1:
-            start_date = st.date_input("From", value=date.today() - timedelta(days=30))
+            start_year = st.number_input(
+                "From year",
+                min_value=1900,
+                max_value=current_year,
+                value=current_year - 1
+            )
         with col2:
-            end_date = st.date_input("To", value=date.today())
+            end_year = st.number_input(
+                "To year",
+                min_value=1900,
+                max_value=current_year,
+                value=current_year
+            )
+
+        # Optional month filter
+        month_option = st.sidebar.selectbox(
+            "Month (optional)",
+            ["All months", "January", "February", "March", "April", "May", "June",
+             "July", "August", "September", "October", "November", "December"]
+        )
+        if month_option != "All months":
+            month = ["January", "February", "March", "April", "May", "June",
+                    "July", "August", "September", "October", "November", "December"].index(month_option) + 1
 
     # Max results
     max_results = st.sidebar.slider(
         "Maximum results",
         min_value=10,
-        max_value=1000,
+        max_value=300,
         value=100,
         step=10,
-        help="Number of observations to retrieve"
+        help="Number of observations to retrieve (GBIF max: 300 per request)"
     )
 
-    # Province filter (optional - can be expanded with actual province list)
-    st.sidebar.subheader("Location")
+    # Province/county filter
+    st.sidebar.subheader("Location Filter")
     province = st.sidebar.text_input(
-        "Province (optional)",
-        help="Enter Swedish province name to filter by location"
+        "State/Province (optional)",
+        help="Enter Swedish county/province name (e.g., 'Skåne', 'Stockholm')"
     )
 
     return {
-        'start_date': start_date,
-        'end_date': end_date,
+        'start_year': start_year,
+        'end_year': end_year,
+        'month': month,
         'max_results': max_results,
         'province': province if province else None
     }
@@ -153,27 +152,24 @@ def display_search_filters():
 
 def search_observations(search_params: Dict[str, Any]):
     """Execute observation search with given parameters."""
-    if st.session_state.api_client is None:
-        st.error("Please configure your API key first.")
-        return
-
-    with st.spinner("Searching for bird observations..."):
-        result = st.session_state.api_client.search_observations(
-            taxon_ids=[Config.BIRDS_TAXON_ID],
-            start_date=search_params['start_date'],
-            end_date=search_params['end_date'],
-            max_results=search_params['max_results'],
-            province=search_params['province']
+    with st.spinner("Searching GBIF for bird observations from Artportalen..."):
+        result = st.session_state.api_client.search_occurrences(
+            taxon_key=Config.BIRDS_TAXON_KEY,
+            start_year=search_params['start_year'],
+            end_year=search_params['end_year'],
+            month=search_params['month'],
+            country=Config.COUNTRY_CODE,
+            limit=search_params['max_results'],
+            state_province=search_params['province']
         )
 
         if 'error' in result:
             st.error(f"Search failed: {result['error']}")
             st.info(
                 "Common issues:\n"
-                "- Invalid API key\n"
-                "- API subscription not active\n"
-                "- Network connectivity issues\n"
-                "- API rate limits exceeded"
+                "- Network connectivity problems\n"
+                "- GBIF API temporarily unavailable\n"
+                "- Invalid search parameters"
             )
             return
 
@@ -186,6 +182,23 @@ def display_observations():
     """Display the observations data."""
     if st.session_state.observations_data is None:
         st.info("Use the sidebar to configure search parameters and click 'Search' to view observations.")
+
+        # Show example
+        st.markdown("---")
+        st.subheader("About This Application")
+        st.markdown("""
+        This application provides free access to Swedish bird observations from **Artportalen**,
+        the Swedish Species Observation System, via the **GBIF public API**.
+
+        **Features:**
+        - 🔍 Search 116+ million observations
+        - 📅 Filter by year, month, and location
+        - 🗺️ View observations on an interactive map
+        - 💾 Download data as CSV
+        - 🌍 **No API key required** - completely free!
+
+        **Get started by clicking the Search button in the sidebar!**
+        """)
         return
 
     data = st.session_state.observations_data
@@ -193,39 +206,40 @@ def display_observations():
     # Display summary
     st.header("Search Results")
 
-    # Check for records
-    records = data.get('records', [])
+    # Check for results
+    results = data.get('results', [])
+    total_count = data.get('count', 0)
 
-    if not records:
-        st.warning("No observations found for the given search criteria.")
+    if not results:
+        st.warning("No observations found for the given search criteria. Try adjusting your filters.")
         return
 
     # Summary metrics
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Total Observations", len(records))
+        st.metric("Results Shown", len(results))
     with col2:
+        st.metric("Total Available", f"{total_count:,}")
+    with col3:
         # Count unique species
         species = set()
-        for record in records:
-            taxon = record.get('taxon', {})
-            species_name = taxon.get('scientificName')
+        for record in results:
+            species_name = record.get('species') or record.get('scientificName')
             if species_name:
                 species.add(species_name)
         st.metric("Unique Species", len(species))
-    with col3:
-        # Get date range
-        if st.session_state.last_search_params:
-            params = st.session_state.last_search_params
-            if params['start_date'] and params['end_date']:
-                days = (params['end_date'] - params['start_date']).days
-                st.metric("Date Range (days)", days)
+    with col4:
+        # Get year range from results
+        years = [r.get('year') for r in results if r.get('year')]
+        if years:
+            year_range = f"{min(years)}-{max(years)}"
+            st.metric("Year Range", year_range)
 
     # Display observations table
     st.subheader("Observations")
 
     # Format records for display
-    formatted_records = [format_observation_record(record) for record in records]
+    formatted_records = [format_observation_record(record) for record in results]
 
     if formatted_records:
         df = pd.DataFrame(formatted_records)
@@ -240,7 +254,7 @@ def display_observations():
         # Download button
         csv = df.to_csv(index=False)
         st.download_button(
-            label="Download as CSV",
+            label="📥 Download as CSV",
             data=csv,
             file_name=f"bird_observations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv"
@@ -252,9 +266,19 @@ def display_observations():
             if not map_data.empty:
                 st.subheader("Observation Locations")
                 st.map(map_data)
+            else:
+                st.info("No coordinate data available for mapping.")
+
+        # Pagination info
+        if total_count > len(results):
+            st.info(
+                f"Showing {len(results)} of {total_count:,} total observations. "
+                f"The GBIF API limits results to 300 per request. "
+                f"Use more specific filters to narrow your search."
+            )
 
     # Show raw data in expander
-    with st.expander("View Raw API Response"):
+    with st.expander("View Raw GBIF API Response"):
         st.json(data)
 
 
@@ -273,46 +297,30 @@ def main():
     # Header
     st.title("🐦 Swedish Bird Observations")
     st.markdown(
-        "Explore bird observations from the Swedish Species Observation System "
-        "(Artportalen) powered by Artdatabanken."
+        "Explore bird observations from **Artportalen** (Swedish Species Observation System) "
+        "via the **GBIF public API** - no API key required!"
     )
 
-    # API configuration
-    display_api_configuration()
+    # About section
+    display_about_section()
 
-    # Only show search if API is configured
-    if st.session_state.api_client:
-        # Search filters
-        search_params = display_search_filters()
+    # Search filters
+    search_params = display_search_filters()
 
-        # Search button
-        if st.sidebar.button("🔍 Search", type="primary", use_container_width=True):
-            search_observations(search_params)
+    # Search button
+    if st.sidebar.button("🔍 Search", type="primary", use_container_width=True):
+        search_observations(search_params)
 
-        # Display results
-        display_observations()
-    else:
-        st.warning(
-            "Please configure your API key in the sidebar to start exploring bird observations."
-        )
+    # Display results
+    display_observations()
 
-        # Information about the API
-        st.info(
-            "**How to get started:**\n\n"
-            "1. Visit [Artdatabanken API Portal](https://api-portal.artdatabanken.se/)\n"
-            "2. Create an account and sign up\n"
-            "3. Subscribe to the Species Observation System API\n"
-            "4. Copy your API key\n"
-            "5. Paste it in the sidebar to start exploring bird observations!"
-        )
-
-        st.markdown("---")
-        st.subheader("About this Application")
-        st.markdown(
-            "This application provides access to Swedish bird observations from Artportalen, "
-            "the Swedish Species Observation System. You can search, filter, and download "
-            "bird observation data from across Sweden."
-        )
+    # Footer
+    st.markdown("---")
+    st.markdown(
+        "Data from [Artportalen](https://www.artportalen.se/) via "
+        "[GBIF](https://www.gbif.org/) • "
+        f"[View Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})"
+    )
 
 
 if __name__ == "__main__":

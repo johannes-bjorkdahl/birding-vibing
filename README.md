@@ -1,21 +1,33 @@
 # 🐦 Birding Vibing
 
-A Python application for exploring Swedish bird observations from the Artdatabanken Species Observation System (Artportalen).
+A Python application for exploring Swedish bird observations from Artportalen via the GBIF public API.
 
 ## Features
 
-- 🔍 Search and filter bird observations from across Sweden
-- 📅 Filter by date ranges (last 7 days, last 30 days, custom range, or all time)
+- 🔍 Search 116+ million bird observations from across Sweden
+- 📅 Filter by year, month, and location (province/county)
 - 📊 View observation statistics and metrics
 - 🗺️ Interactive map showing observation locations
 - 💾 Export observations to CSV format
 - 🎯 User-friendly Streamlit interface
+- 🌍 **No API key required** - uses free GBIF public API!
+
+## About the Data
+
+This application accesses the **Artportalen** dataset, Sweden's national species observation system, through the **GBIF (Global Biodiversity Information Facility)** public API.
+
+- **116+ million observations** of plants, animals, and fungi
+- **Weekly updates** from Artportalen
+- **Open data** (CC0 license) - ~93% of observations freely accessible
+- Managed by SLU Artdatabanken (Swedish University of Agricultural Sciences)
+- Dataset ID: `38b4c89f-584c-41bb-bd8f-cd1def33e92f`
+
+**View on GBIF:** https://www.gbif.org/dataset/38b4c89f-584c-41bb-bd8f-cd1def33e92f
 
 ## Prerequisites
 
 - Python 3.11 or higher
 - UV package manager
-- API key from Artdatabanken (see setup instructions below)
 
 ## Installation
 
@@ -35,32 +47,7 @@ A Python application for exploring Swedish bird observations from the Artdataban
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-3. **Configure your API key:**
-
-   You need an API key from Artdatabanken to access the bird observation data.
-
-   **Get your API key:**
-   - Visit [Artdatabanken API Portal](https://api-portal.artdatabanken.se/)
-   - Create an account and sign up
-   - Subscribe to the "Species Observation System" API
-   - Copy your API subscription key
-
-   **Option 1: Using environment variables (recommended)**
-
-   Create a `.env` file in the project root:
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` and add your API key:
-   ```
-   API_KEY=your_actual_api_key_here
-   API_BASE_URL=https://api.artdatabanken.se/species-observation-system/v1
-   ```
-
-   **Option 2: Enter API key in the application**
-
-   You can also enter your API key directly in the Streamlit sidebar when running the application.
+That's it! No API keys or configuration needed.
 
 ## Usage
 
@@ -86,18 +73,19 @@ The application will open in your default web browser at `http://localhost:8501`
 
 ### Using the Application
 
-1. **Configure API Key:**
-   - If you haven't set up a `.env` file, enter your API key in the sidebar
-   - Click "Set API Key" to activate
+1. **Select Time Period:**
+   - Current year
+   - Last 5 years
+   - Custom range (with optional month filter)
+   - All time
 
-2. **Search for Observations:**
-   - Select a date range (Last 7 days, Last 30 days, Custom, or All time)
-   - Adjust the maximum number of results (10-1000)
-   - Optionally filter by Swedish province
+2. **Configure Search:**
+   - Adjust the maximum number of results (10-300)
+   - Optionally filter by Swedish province/county (e.g., "Skåne", "Stockholm")
+
+3. **Search and Explore:**
    - Click "🔍 Search" to retrieve observations
-
-3. **View Results:**
-   - See summary metrics (total observations, unique species, date range)
+   - View summary metrics (total observations, unique species, etc.)
    - Browse the interactive table of observations
    - View observation locations on the map
    - Download results as CSV
@@ -109,28 +97,32 @@ birding-vibing/
 ├── src/
 │   ├── __init__.py          # Package initialization
 │   ├── app.py               # Main Streamlit application
-│   ├── api_client.py        # Artdatabanken API client
-│   └── config.py            # Configuration management
-├── .env.example             # Example environment variables
-├── .gitignore              # Git ignore rules
-├── pyproject.toml          # Project dependencies and metadata
-├── run.sh                  # Convenience script to run the app
-└── README.md               # This file
+│   ├── api_client.py        # GBIF API client
+│   └── config.py            # Configuration (dataset ID, API endpoints)
+├── .gitignore               # Git ignore rules
+├── pyproject.toml           # Project dependencies and metadata
+├── run.sh                   # Convenience script to run the app
+└── README.md                # This file
 ```
 
 ## API Information
 
-This application uses the **Artdatabanken Species Observation System API** to access bird observation data from Artportalen, Sweden's national species observation system.
+This application uses the **GBIF API** to access bird observation data:
 
-### Key Features:
-- Access to thousands of bird observations across Sweden
-- Filter by species, date, location, and more
-- Real-time data from citizen scientists and researchers
-- Comprehensive observation metadata
+- **Base URL:** https://api.gbif.org/v1
+- **Authentication:** None required (public API)
+- **Rate Limits:** Fair use policy, no hard limits for basic queries
+- **Max Results:** 300 per request
+
+### Key Parameters:
+- **datasetKey:** `38b4c89f-584c-41bb-bd8f-cd1def33e92f` (Artportalen dataset)
+- **taxonKey:** `212` (Aves - all birds in GBIF backbone taxonomy)
+- **country:** `SE` (Sweden)
 
 ### API Documentation:
-- [API Portal](https://api-portal.artdatabanken.se/)
-- [Artdatabanken Website](https://www.artdatabanken.se/)
+- [GBIF API Documentation](https://techdocs.gbif.org/en/openapi/)
+- [GBIF API Beginner's Guide](https://data-blog.gbif.org/post/gbif-api-beginners-guide/)
+- [Artportalen Website](https://www.artportalen.se/)
 
 ## Development
 
@@ -140,34 +132,63 @@ This application uses the **Artdatabanken Species Observation System API** to ac
 uv add package-name
 ```
 
-### Running Tests
+### Code Structure
 
-```bash
-uv run pytest
-```
+The application is organized into three main modules:
+
+- **config.py** - Configuration constants (API URLs, dataset IDs)
+- **api_client.py** - GBIF API client with methods for searching observations
+- **app.py** - Streamlit web interface
+
+## Examples
+
+### Example Search Queries
+
+1. **All birds in current year:**
+   - Time Period: "Current year"
+   - Province: (leave empty)
+   - Click Search
+
+2. **Birds in Stockholm last 5 years:**
+   - Time Period: "Last 5 years"
+   - Province: "Stockholm"
+   - Click Search
+
+3. **Birds in specific month:**
+   - Time Period: "Custom range"
+   - Year: 2024-2024
+   - Month: "May"
+   - Click Search
 
 ## Troubleshooting
 
 ### Common Issues
 
-**"API Key not configured"**
-- Ensure you've created a `.env` file with your API key
-- Or enter your API key manually in the sidebar
-
-**"Search failed: HTTP error 401"**
-- Your API key is invalid or expired
-- Check that you've subscribed to the correct API product
-- Verify your API key at the [API Portal](https://api-portal.artdatabanken.se/)
-
-**"Search failed: HTTP error 429"**
-- You've exceeded the API rate limit
-- Wait a few minutes before trying again
-- Consider reducing the number of requests
-
 **"No observations found"**
 - Try expanding your date range
-- Remove province filters
-- Check that there are observations for your search criteria
+- Remove location filters
+- Check that you're searching within valid years (data availability varies)
+
+**"Search failed: HTTP error"**
+- Check your internet connection
+- GBIF API may be temporarily unavailable
+- Try again in a few moments
+
+**Application won't start**
+- Ensure all dependencies are installed: `uv sync`
+- Check that you're using Python 3.11+: `python --version`
+- Try running with `uv run streamlit run src/app.py`
+
+**Map not showing**
+- Some observations may not have coordinate data
+- Check if the results include Latitude/Longitude columns
+
+## Performance Notes
+
+- GBIF API limits results to 300 per request
+- For large datasets, use specific filters to narrow your search
+- Download options are available for further analysis
+- The dataset contains 116+ million observations, so filtering is essential
 
 ## Contributing
 
@@ -177,12 +198,33 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 This project is open source. Please check the LICENSE file for details.
 
+The data accessed through this application is published under **CC0 1.0** (public domain dedication) by SLU Artdatabanken.
+
 ## Acknowledgments
 
-- Data provided by [Artdatabanken](https://www.artdatabanken.se/) (Swedish Species Information Centre)
+- Data provided by [Artportalen](https://www.artportalen.se/) and [SLU Artdatabanken](https://www.artdatabanken.se/)
+- Data accessed via [GBIF](https://www.gbif.org/) public API
 - Built with [Streamlit](https://streamlit.io/)
 - Package management by [UV](https://github.com/astral-sh/uv)
+
+## Citation
+
+If you use this data in research or publications, please cite:
+
+```
+Artportalen (Swedish Species Observation System).
+SLU Artdatabanken, Swedish University of Agricultural Sciences.
+Accessed via GBIF.org on [date].
+Dataset: https://www.gbif.org/dataset/38b4c89f-584c-41bb-bd8f-cd1def33e92f
+```
 
 ## Contact
 
 For questions or support, please open an issue on the repository.
+
+## Links
+
+- **GBIF Dataset:** https://www.gbif.org/dataset/38b4c89f-584c-41bb-bd8f-cd1def33e92f
+- **Artportalen:** https://www.artportalen.se/
+- **SLU Artdatabanken:** https://www.artdatabanken.se/
+- **GBIF:** https://www.gbif.org/

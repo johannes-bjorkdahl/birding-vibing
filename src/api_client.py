@@ -1,113 +1,104 @@
-"""API client for Artdatabanken Species Observation System."""
+"""API client for GBIF (Global Biodiversity Information Facility) API."""
 import httpx
 from typing import Dict, List, Optional, Any
-from datetime import datetime, date
-import time
+from datetime import date
 
 
-class ArtdatabankenAPIClient:
-    """Client for interacting with the Artdatabanken Species Observation System API."""
+class GBIFAPIClient:
+    """Client for interacting with the GBIF API to access Swedish bird observations."""
 
-    def __init__(self, api_key: str, base_url: str):
+    def __init__(self, base_url: str, dataset_key: str):
         """
-        Initialize the API client.
+        Initialize the GBIF API client.
 
         Args:
-            api_key: API subscription key from Artdatabanken
-            base_url: Base URL for the API
+            base_url: Base URL for the GBIF API
+            dataset_key: Dataset key for the Artportalen dataset
         """
-        self.api_key = api_key
         self.base_url = base_url.rstrip('/')
+        self.dataset_key = dataset_key
         self.headers = {
-            "Ocp-Apim-Subscription-Key": api_key,
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "User-Agent": "BirdingVibing/1.0 (Swedish Bird Observations App)"
         }
 
-    def search_observations(
+    def search_occurrences(
         self,
-        taxon_ids: Optional[List[int]] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        province: Optional[str] = None,
-        max_results: int = 100,
-        output_fields: Optional[List[str]] = None
+        taxon_key: Optional[int] = None,
+        start_year: Optional[int] = None,
+        end_year: Optional[int] = None,
+        month: Optional[int] = None,
+        country: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+        state_province: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Search for bird observations.
+        Search for bird observations in the dataset.
 
         Args:
-            taxon_ids: List of taxon IDs to search for (e.g., [4000104] for all birds)
-            start_date: Start date for observations
-            end_date: End date for observations
-            province: Swedish province name to filter by
-            max_results: Maximum number of results to return
-            output_fields: List of fields to include in the output
+            taxon_key: GBIF taxon key (e.g., 212 for all birds/Aves)
+            start_year: Start year for observations
+            end_year: End year for observations
+            month: Month filter (1-12)
+            country: ISO country code (e.g., 'SE' for Sweden)
+            limit: Maximum number of results to return (max 300)
+            offset: Offset for pagination
+            state_province: State or province name filter
 
         Returns:
             Dict containing search results and metadata
         """
-        endpoint = f"{self.base_url}/Observations/Search"
+        endpoint = f"{self.base_url}/occurrence/search"
 
-        # Build the search filter
-        search_filter = {}
-
-        if taxon_ids:
-            search_filter["taxon"] = {
-                "ids": taxon_ids,
-                "includeUnderlyingTaxa": True
-            }
-
-        if start_date or end_date:
-            date_filter = {}
-            if start_date:
-                date_filter["startDate"] = start_date.isoformat()
-            if end_date:
-                date_filter["endDate"] = end_date.isoformat()
-            search_filter["date"] = date_filter
-
-        if province:
-            search_filter["location"] = {
-                "areas": [{"featureId": province}]
-            }
-
-        # Build the request payload
-        payload = {
-            "filter": search_filter,
-            "skip": 0,
-            "take": min(max_results, 1000)  # API usually has limits
+        # Build query parameters
+        params = {
+            "datasetKey": self.dataset_key,
+            "limit": min(limit, 300),  # GBIF max is 300 per request
+            "offset": offset
         }
 
-        if output_fields:
-            payload["outputFields"] = output_fields
+        if taxon_key:
+            params["taxonKey"] = taxon_key
+
+        if start_year:
+            params["year"] = f"{start_year},{end_year if end_year else start_year}"
+
+        if month:
+            params["month"] = month
+
+        if country:
+            params["country"] = country
+
+        if state_province:
+            params["stateProvince"] = state_province
 
         try:
             with httpx.Client(timeout=30.0) as client:
-                response = client.post(endpoint, json=payload, headers=self.headers)
+                response = client.get(endpoint, params=params, headers=self.headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
             return {
                 "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-                "records": []
+                "results": [],
+                "count": 0
             }
         except Exception as e:
             return {
                 "error": f"Request failed: {str(e)}",
-                "records": []
+                "results": [],
+                "count": 0
             }
 
-    def get_taxon_info(self, taxon_id: int) -> Dict[str, Any]:
+    def get_dataset_info(self) -> Dict[str, Any]:
         """
-        Get information about a specific taxon.
-
-        Args:
-            taxon_id: The taxon ID to look up
+        Get information about the dataset.
 
         Returns:
-            Dict containing taxon information
+            Dict containing dataset information
         """
-        endpoint = f"{self.base_url}/Taxa/{taxon_id}"
+        endpoint = f"{self.base_url}/dataset/{self.dataset_key}"
 
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -123,77 +114,71 @@ class ArtdatabankenAPIClient:
                 "error": f"Request failed: {str(e)}"
             }
 
-    def export_observations_csv(
-        self,
-        taxon_ids: Optional[List[int]] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        output_fields: Optional[List[str]] = None
-    ) -> Optional[str]:
+    def get_species_info(self, taxon_key: int) -> Dict[str, Any]:
         """
-        Request a CSV export of observations. This is an async operation.
+        Get information about a specific species/taxon.
 
         Args:
-            taxon_ids: List of taxon IDs to export
-            start_date: Start date for observations
-            end_date: End date for observations
-            output_fields: List of fields to include in the export
+            taxon_key: GBIF taxon key
 
         Returns:
-            Job ID for tracking the export, or None if failed
+            Dict containing taxon information
         """
-        endpoint = f"{self.base_url}/Exports/Order/Csv"
-
-        # Build the export filter (similar to search)
-        export_filter = {}
-
-        if taxon_ids:
-            export_filter["taxon"] = {
-                "ids": taxon_ids,
-                "includeUnderlyingTaxa": True
-            }
-
-        if start_date or end_date:
-            date_filter = {}
-            if start_date:
-                date_filter["startDate"] = start_date.isoformat()
-            if end_date:
-                date_filter["endDate"] = end_date.isoformat()
-            export_filter["date"] = date_filter
-
-        payload = {"filter": export_filter}
-
-        if output_fields:
-            payload["outputFields"] = output_fields
-
-        try:
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(endpoint, json=payload, headers=self.headers)
-                response.raise_for_status()
-                result = response.json()
-                return result.get("jobId")
-        except Exception as e:
-            print(f"Export request failed: {e}")
-            return None
-
-    def check_export_status(self, job_id: str) -> Dict[str, Any]:
-        """
-        Check the status of an export job.
-
-        Args:
-            job_id: The job ID returned from export_observations_csv
-
-        Returns:
-            Dict containing job status and download URL if ready
-        """
-        endpoint = f"{self.base_url}/Jobs/{job_id}/Status"
+        endpoint = f"{self.base_url}/species/{taxon_key}"
 
         try:
             with httpx.Client(timeout=10.0) as client:
                 response = client.get(endpoint, headers=self.headers)
                 response.raise_for_status()
                 return response.json()
+        except httpx.HTTPStatusError as e:
+            return {
+                "error": f"HTTP error {e.response.status_code}: {e.response.text}"
+            }
         except Exception as e:
             return {
-                "error": f"Status check failed: {str(e)}"
+                "error": f"Request failed: {str(e)}"
+            }
+
+    def search_species(
+        self,
+        query: str,
+        rank: Optional[str] = None,
+        highertaxon_key: Optional[int] = None,
+        limit: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Search for species by name.
+
+        Args:
+            query: Search query (species name)
+            rank: Taxonomic rank filter (e.g., 'SPECIES', 'GENUS')
+            highertaxon_key: Filter by higher taxon (e.g., 212 for birds)
+            limit: Maximum number of results
+
+        Returns:
+            Dict containing search results
+        """
+        endpoint = f"{self.base_url}/species/search"
+
+        params = {
+            "q": query,
+            "limit": limit
+        }
+
+        if rank:
+            params["rank"] = rank
+
+        if highertaxon_key:
+            params["highertaxonKey"] = highertaxon_key
+
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(endpoint, params=params, headers=self.headers)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            return {
+                "error": f"Search failed: {str(e)}",
+                "results": []
             }
