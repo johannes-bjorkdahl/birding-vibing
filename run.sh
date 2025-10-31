@@ -1,10 +1,8 @@
 #!/bin/bash
-# Run the Streamlit application
+# Run the Streamlit application using UV
 
-# Activate virtual environment if it exists
-if [ -d ".venv" ]; then
-    source .venv/bin/activate
-fi
+# Ensure UV is in PATH
+export PATH="$HOME/.local/bin:$PATH"
 
-# Run Streamlit
+# Run Streamlit using UV (automatically uses .venv created by uv sync)
 uv run streamlit run src/app.py
