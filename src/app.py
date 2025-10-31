@@ -63,8 +63,12 @@ def create_clustered_map(df: pd.DataFrame) -> folium.Map:
         df: DataFrame containing observation data with latitude/longitude columns
 
     Returns:
-        A folium.Map object with clustered markers
+        A folium.Map object with clustered markers, or None if no valid coordinates
     """
+    # Check if required columns exist
+    if 'latitude' not in df.columns or 'longitude' not in df.columns:
+        return None
+    
     # Filter for valid coordinates
     map_data = df[['latitude', 'longitude']].dropna()
 
