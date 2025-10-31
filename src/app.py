@@ -41,7 +41,7 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         'State/Province': record.get('stateProvince', 'N/A'),
         'Country': record.get('countryCode', 'N/A'),
         'Observer': record.get('recordedBy', 'N/A'),
-        'Individual Count': record.get('individualCount', 'N/A'),
+        'Individual Count': record.get('individualCount') if record.get('individualCount') is not None else pd.NA,
         'Basis of Record': record.get('basisOfRecord', 'N/A'),
     }
 
@@ -247,7 +247,7 @@ def display_observations():
         # Display as interactive table
         st.dataframe(
             df,
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
 
@@ -265,6 +265,8 @@ def display_observations():
             map_data = df[['latitude', 'longitude']].dropna()
             if not map_data.empty:
                 st.subheader("Observation Locations")
+                # Ensure column names are lowercase for st.map()
+                map_data.columns = ['latitude', 'longitude']
                 st.map(map_data)
             else:
                 st.info("No coordinate data available for mapping.")
@@ -308,7 +310,7 @@ def main():
     search_params = display_search_filters()
 
     # Search button
-    if st.sidebar.button("🔍 Search", type="primary", use_container_width=True):
+    if st.sidebar.button("🔍 Search", type="primary", width='stretch'):
         search_observations(search_params)
 
     # Display results
