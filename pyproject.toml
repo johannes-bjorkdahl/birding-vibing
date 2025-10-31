@@ -1,0 +1,10 @@
+[project]
+name = "birding-vibing"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1",
+    "pandas>=2.3.3",
+    "streamlit>=1.51.0",
+]
