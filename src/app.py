@@ -47,8 +47,8 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
 
     # Add coordinates if available
     if record.get('decimalLatitude') and record.get('decimalLongitude'):
-        formatted['Latitude'] = record['decimalLatitude']
-        formatted['Longitude'] = record['decimalLongitude']
+        formatted['latitude'] = record['decimalLatitude']
+        formatted['longitude'] = record['decimalLongitude']
 
     return formatted
 
@@ -261,8 +261,8 @@ def display_observations():
         )
 
         # Display map if coordinates are available
-        if 'Latitude' in df.columns and 'Longitude' in df.columns:
-            map_data = df[['Latitude', 'Longitude']].dropna()
+        if 'latitude' in df.columns and 'longitude' in df.columns:
+            map_data = df[['latitude', 'longitude']].dropna()
             if not map_data.empty:
                 st.subheader("Observation Locations")
                 st.map(map_data)
