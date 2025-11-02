@@ -8,7 +8,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.api_client import GBIFAPIClient
+from src.api.gbif_client import GBIFAPIClient
 from src.app import search_observations
 from src.config import Config
 
@@ -46,7 +46,7 @@ class TestFilterIntegration:
         }
         mock_response.raise_for_status = Mock()
         
-        with patch('src.api_client.httpx.Client') as mock_client_class:
+        with patch('src.api.gbif_client.httpx.Client') as mock_client_class:
             mock_client = Mock()
             mock_client.get.return_value = mock_response
             mock_client.__enter__ = Mock(return_value=mock_client)
@@ -77,7 +77,7 @@ class TestFilterIntegration:
 
     def test_date_and_location_filter_combination(self):
         """Test combining date and location filters."""
-        with patch('src.api_client.httpx.Client') as mock_client_class:
+        with patch('src.api.gbif_client.httpx.Client') as mock_client_class:
             mock_response = Mock()
             mock_response.json.return_value = {"results": [], "count": 0}
             mock_response.raise_for_status = Mock()
@@ -118,7 +118,7 @@ class TestFilterIntegration:
 
     def test_default_date_range_integration(self):
         """Test that default date range (yesterday and today) works."""
-        with patch('src.api_client.httpx.Client') as mock_client_class:
+        with patch('src.api.gbif_client.httpx.Client') as mock_client_class:
             mock_response = Mock()
             mock_response.json.return_value = {"results": [], "count": 0}
             mock_response.raise_for_status = Mock()

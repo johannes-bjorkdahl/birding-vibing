@@ -1,23 +1,39 @@
 # 🐦 Birding Vibing
 
-A Python application for exploring Swedish bird observations from Artportalen via the GBIF public API.
+A Python application for exploring Swedish bird observations from Artportalen with **dual API support**: Real-time data via Artportalen API or historical data via GBIF API.
 
 ## Features
 
 - 🔍 Search 116+ million bird observations from across Sweden
-- 📅 Filter by year, month, and location (province/county)
+- ⚡ **Real-time data** via Artportalen API (when configured)
+- 📚 **Historical data** via GBIF API (always available)
+- 🔄 **Smart API selection** - automatically chooses the best API based on date range
+- 📅 Filter by date range and location (province/county)
 - 📊 View observation statistics and metrics
 - 🗺️ Interactive map showing observation locations
 - 💾 Export observations to CSV format
 - 🎯 User-friendly Streamlit interface
-- 🌍 **No API key required** - uses free GBIF public API!
+- 🌍 **GBIF API requires no API key** - works out of the box!
 
 ## About the Data
 
-This application accesses the **Artportalen** dataset, Sweden's national species observation system, through the **GBIF (Global Biodiversity Information Facility)** public API.
+This application accesses the **Artportalen** dataset, Sweden's national species observation system, through two APIs:
+
+### Dual API Support
+
+1. **Artportalen API** (Real-time)
+   - **Update Frequency**: ~10 minutes (near real-time)
+   - **Coverage**: Current day + recent observations
+   - **Authentication**: Required (API key from api-portal.artdatabanken.se)
+   - **Best for**: Recent observations (last 7-14 days)
+
+2. **GBIF API** (Historical)
+   - **Update Frequency**: Weekly updates
+   - **Coverage**: Historical data (older than ~1 week)
+   - **Authentication**: None required (public API)
+   - **Best for**: Historical observations and when Artportalen API is not configured
 
 - **116+ million observations** of plants, animals, and fungi
-- **Weekly updates** from Artportalen
 - **Open data** (CC0 license) - ~93% of observations freely accessible
 - Managed by SLU Artdatabanken (Swedish University of Agricultural Sciences)
 - Dataset ID: `38b4c89f-584c-41bb-bd8f-cd1def33e92f`
@@ -47,7 +63,19 @@ This application accesses the **Artportalen** dataset, Sweden's national species
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-That's it! No API keys or configuration needed.
+3. **Configure Artportalen API (Optional):**
+   
+   For real-time data access, create a `.env` file in the project root:
+   ```bash
+   ARTPORTALEN_SLU_API_KEY=your_api_key_here
+   ```
+   
+   To obtain an API key:
+   1. Register at [api-portal.artdatabanken.se](https://api-portal.artdatabanken.se/)
+   2. Subscribe to the observation API product
+   3. Copy your API key to the `.env` file
+   
+   **Note:** The application works without the Artportalen API key - it will automatically use GBIF API for all queries. Artportalen API is only needed for real-time recent observations.
 
 ## Usage
 
@@ -73,18 +101,23 @@ The application will open in your default web browser at `http://localhost:8502`
 
 ### Using the Application
 
-1. **Select Time Period:**
-   - Current year
-   - Last 5 years
-   - Custom range (with optional month filter)
-   - All time
+1. **Select Data Source (Optional):**
+   - **Auto**: Automatically selects Artportalen for recent dates (last 7 days), GBIF for older dates
+   - **Artportalen**: Force use of Artportalen API (real-time data)
+   - **GBIF**: Force use of GBIF API (weekly updates)
 
-2. **Configure Search:**
-   - Adjust the maximum number of results (10-300)
+2. **Select Date Range:**
+   - Choose start and end dates for your search
+   - Recent dates will automatically use Artportalen API if configured
+
+3. **Configure Search:**
+   - Adjust the maximum number of results (10-300 for GBIF, up to 1000 for Artportalen)
    - Optionally filter by Swedish province/county (e.g., "Skåne", "Stockholm")
+   - Optionally filter by locality (city/town name)
 
-3. **Search and Explore:**
+4. **Search and Explore:**
    - Click "🔍 Search" to retrieve observations
+   - View which API was used (shown in results)
    - View summary metrics (total observations, unique species, etc.)
    - Browse the interactive table of observations
    - View observation locations on the map
@@ -97,8 +130,14 @@ birding-vibing/
 ├── src/
 │   ├── __init__.py          # Package initialization
 │   ├── app.py               # Main Streamlit application
-│   ├── api_client.py        # GBIF API client
-│   └── config.py            # Configuration (dataset ID, API endpoints)
+│   ├── config.py            # Configuration (dataset ID, API endpoints)
+│   └── api/
+│       ├── __init__.py      # API package initialization
+│       ├── gbif_client.py   # GBIF API client
+│       ├── artportalen_client.py  # Artportalen API client
+│       ├── unified_client.py     # Smart API router
+│       └── data_adapter.py   # Data normalization adapter
+├── .env                     # Environment variables (API keys) - not in git
 ├── .gitignore               # Git ignore rules
 ├── pyproject.toml           # Project dependencies and metadata
 ├── run.sh                   # Convenience script to run the app
@@ -107,21 +146,41 @@ birding-vibing/
 
 ## API Information
 
-This application uses the **GBIF API** to access bird observation data:
+### GBIF API
+
+This application uses the **GBIF API** for historical bird observation data:
 
 - **Base URL:** https://api.gbif.org/v1
 - **Authentication:** None required (public API)
 - **Rate Limits:** Fair use policy, no hard limits for basic queries
 - **Max Results:** 300 per request
+- **Update Frequency:** Weekly
 
-### Key Parameters:
+**Key Parameters:**
 - **datasetKey:** `38b4c89f-584c-41bb-bd8f-cd1def33e92f` (Artportalen dataset)
 - **taxonKey:** `212` (Aves - all birds in GBIF backbone taxonomy)
 - **country:** `SE` (Sweden)
 
+### Artportalen API
+
+For real-time observations, the application can use the **Artportalen API**:
+
+- **Base URL:** https://api.artdatabanken.se/species-observation-system/v1
+- **Authentication:** Required (API key via subscription)
+- **Update Frequency:** ~10 minutes (near real-time)
+- **Max Results:** Up to 1000 per request
+- **Coverage:** Recent observations (typically last 7-14 days)
+
+**Setup:**
+1. Register at [api-portal.artdatabanken.se](https://api-portal.artdatabanken.se/)
+2. Subscribe to the observation API product
+3. Add API key to `.env` file as `ARTPORTALEN_SLU_API_KEY`
+
 ### API Documentation:
 - [GBIF API Documentation](https://techdocs.gbif.org/en/openapi/)
 - [GBIF API Beginner's Guide](https://data-blog.gbif.org/post/gbif-api-beginners-guide/)
+- [Artportalen Developer Portal](https://api-portal.artdatabanken.se/)
+- [Artportalen API Documentation](https://www.slu.se/artdatabanken/rapportering-och-fynd/oppna-data-och-apier/)
 - [Artportalen Website](https://www.artportalen.se/)
 
 ## Development
@@ -134,10 +193,13 @@ uv add package-name
 
 ### Code Structure
 
-The application is organized into three main modules:
+The application is organized into modular components:
 
-- **config.py** - Configuration constants (API URLs, dataset IDs)
-- **api_client.py** - GBIF API client with methods for searching observations
+- **config.py** - Configuration constants (API URLs, dataset IDs, environment variables)
+- **api/gbif_client.py** - GBIF API client
+- **api/artportalen_client.py** - Artportalen API client
+- **api/unified_client.py** - Smart API router that selects appropriate API
+- **api/data_adapter.py** - Normalizes Artportalen responses to GBIF format
 - **app.py** - Streamlit web interface
 
 ## Examples
@@ -171,8 +233,14 @@ The application is organized into three main modules:
 
 **"Search failed: HTTP error"**
 - Check your internet connection
-- GBIF API may be temporarily unavailable
+- API may be temporarily unavailable
+- If using Artportalen API, verify your API key is correct and active
 - Try again in a few moments
+
+**"Artportalen API not configured"**
+- This is normal if you haven't set up the Artportalen API key
+- The app will automatically use GBIF API instead
+- To enable real-time data, follow the Artportalen API setup instructions above
 
 **Application won't start**
 - Ensure all dependencies are installed: `uv sync`
@@ -185,10 +253,12 @@ The application is organized into three main modules:
 
 ## Performance Notes
 
-- GBIF API limits results to 300 per request
+- **GBIF API** limits results to 300 per request
+- **Artportalen API** supports up to 1000 results per request
 - For large datasets, use specific filters to narrow your search
 - Download options are available for further analysis
 - The dataset contains 116+ million observations, so filtering is essential
+- Recent dates (last 7 days) automatically use Artportalen API for faster, real-time data
 
 ## Contributing
 
@@ -203,7 +273,7 @@ The data accessed through this application is published under **CC0 1.0** (publi
 ## Acknowledgments
 
 - Data provided by [Artportalen](https://www.artportalen.se/) and [SLU Artdatabanken](https://www.artdatabanken.se/)
-- Data accessed via [GBIF](https://www.gbif.org/) public API
+- Data accessed via [GBIF](https://www.gbif.org/) public API and [Artportalen API](https://api-portal.artdatabanken.se/)
 - Built with [Streamlit](https://streamlit.io/)
 - Package management by [UV](https://github.com/astral-sh/uv)
 
@@ -226,5 +296,6 @@ For questions or support, please open an issue on the repository.
 
 - **GBIF Dataset:** https://www.gbif.org/dataset/38b4c89f-584c-41bb-bd8f-cd1def33e92f
 - **Artportalen:** https://www.artportalen.se/
+- **Artportalen Developer Portal:** https://api-portal.artdatabanken.se/
 - **SLU Artdatabanken:** https://www.artdatabanken.se/
 - **GBIF:** https://www.gbif.org/
