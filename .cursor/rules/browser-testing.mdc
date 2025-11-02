@@ -1,0 +1,58 @@
+---
+description: Mandatory browser testing for all web features and fixes before marking tasks as complete
+alwaysApply: true
+---
+
+// MANDATORY BROWSER TESTING FOR WEB FEATURES AND FIXES
+//
+// When implementing or fixing any web frontend features, UI components, or web-related functionality,
+// you MUST use the browser tools available in Cursor to test the changes before marking the task as complete.
+//
+// REQUIREMENTS:
+//
+// 1. BROWSER TESTING IS MANDATORY
+//    - All web features, UI changes, frontend fixes, and Streamlit app modifications MUST be tested
+//      using browser tools before considering the task complete
+//    - Never mark a task as "done" or "tested" without actual browser verification
+//    - Code-only testing (unit tests, manual code review) is NOT sufficient for web features
+//
+// 2. APPLICATION URL
+//    - Default test URL: http://localhost:8502 (Streamlit app runs on port 8502)
+//    - Ensure the application is running before testing (use: uv run streamlit run src/app.py --server.port 8502)
+//    - Navigate to the URL using browser_navigate tool
+//
+// 3. TESTING WORKFLOW
+//    - Navigate to the application URL
+//    - Use browser_snapshot to capture the current state
+//    - Interact with the feature/fix using browser tools (click, type, select, etc.)
+//    - Verify the expected behavior actually works in the browser
+//    - Check for visual issues, broken UI elements, JavaScript errors, or unexpected behavior
+//    - Use browser_console_messages to check for errors
+//
+// 4. ITERATION REQUIREMENT
+//    - If browser testing reveals issues, you MUST fix them and re-test
+//    - Continue iterating on fixes until the feature works correctly in the browser
+//    - Do not consider the task complete until browser testing confirms it works
+//
+// 5. SCOPE
+//    - Applies to: Streamlit UI changes, frontend components, form interactions, map visualizations,
+//      data display, user interactions, styling changes, responsive design, and any web-facing feature
+//    - Even small UI tweaks must be verified in the browser
+//
+// 6. DOCUMENTATION
+//    - Document any limitations or known issues discovered during browser testing
+//    - Note if certain browsers or conditions affect functionality
+//
+// EXAMPLE WORKFLOW:
+// 1. Make code changes
+// 2. Start/restart the Streamlit app if needed
+// 3. Use browser_navigate to go to http://localhost:8502
+// 4. Use browser_snapshot to see the current state
+// 5. Interact with the feature (click buttons, fill forms, etc.)
+// 6. Verify expected behavior
+// 7. Check console for errors
+// 8. If issues found, fix and repeat from step 3
+// 9. Only mark as complete when browser testing confirms it works
+//
+// REMEMBER: Browser tools exist for this exact purpose - to catch issues that only appear
+// when viewing the application in an actual browser. Use them!

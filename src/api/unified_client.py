@@ -139,14 +139,17 @@ class UnifiedAPIClient:
                     normalized["_api_selection_reason"] = reason
                     return normalized
                 else:
-                    # If Artportalen fails, fallback to GBIF
+                    # If Artportalen fails, preserve error and fallback to GBIF
                     error_msg = result.get("error", "Unknown error")
+                    # Store error for display even when falling back
+                    artportalen_error = error_msg
                     # Continue to GBIF fallback below
                     use_artportalen = False
                     reason = f"artportalen_failed: {error_msg}"
 
             except Exception as e:
-                # Exception occurred, fallback to GBIF
+                # Exception occurred, preserve error and fallback to GBIF
+                artportalen_error = str(e)
                 use_artportalen = False
                 reason = f"artportalen_exception: {str(e)}"
 
@@ -162,13 +165,19 @@ class UnifiedAPIClient:
             locality=locality
         )
 
-        # Add API source indicator
+        # Add API source indicator and preserve Artportalen error if it failed
         if "error" not in result:
             result["_api_source"] = "gbif"
             result["_api_selection_reason"] = reason
+            # If we fell back from Artportalen, include the error info
+            if reason.startswith("artportalen_failed") or reason.startswith("artportalen_exception"):
+                result["_artportalen_error"] = reason.split(":", 1)[1] if ":" in reason else reason
         else:
             result["_api_source"] = "gbif"
             result["_api_selection_reason"] = reason
+            # Preserve Artportalen error even if GBIF also fails
+            if reason.startswith("artportalen_failed") or reason.startswith("artportalen_exception"):
+                result["_artportalen_error"] = reason.split(":", 1)[1] if ":" in reason else reason
 
         return result
 

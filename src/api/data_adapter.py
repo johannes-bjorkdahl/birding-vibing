@@ -6,6 +6,14 @@ from datetime import datetime, date
 def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normalize an Artportalen observation record to match GBIF format.
+    
+    Artportalen API structure:
+    - event: {startDate, endDate}
+    - taxon: {id, scientificName, vernacularName, attributes}
+    - location: {decimalLatitude, decimalLongitude, county: {name}, municipality: {name}}
+    - occurrence: {individualCount, occurrenceId, occurrenceStatus}
+    - identification: {verified, uncertainIdentification}
+    - datasetName
 
     Args:
         record: Raw Artportalen observation record
@@ -15,10 +23,12 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """
     normalized = {}
 
-    # Map common fields
-    # Date handling
+    # ===== DATE HANDLING =====
+    # Artportalen uses nested event.startDate and event.endDate
     event_date = None
-    if "startDate" in record:
+    if "event" in record and isinstance(record["event"], dict):
+        event_date = record["event"].get("startDate") or record["event"].get("endDate")
+    elif "startDate" in record:
         event_date = record["startDate"]
     elif "observationDate" in record:
         event_date = record["observationDate"]
@@ -28,33 +38,31 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
         event_date = record["eventDate"]
 
     if event_date:
-        # Parse date string if needed
+        # Parse date string
         if isinstance(event_date, str):
             try:
-                # Try various date formats
-                for fmt in ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ"]:
-                    try:
-                        parsed_date = datetime.strptime(event_date.split('T')[0], "%Y-%m-%d")
-                        normalized["eventDate"] = parsed_date.strftime("%Y-%m-%d")
-                        normalized["year"] = parsed_date.year
-                        normalized["month"] = parsed_date.month
-                        normalized["day"] = parsed_date.day
-                        break
-                    except:
-                        continue
-            except:
-                normalized["eventDate"] = event_date
+                # Extract date part (before T and timezone)
+                date_str = event_date.split('T')[0].split('+')[0].split('-')[0:3]
+                if len(date_str) >= 3:
+                    parsed_date = datetime.strptime('-'.join(date_str), "%Y-%m-%d")
+                    normalized["eventDate"] = parsed_date.strftime("%Y-%m-%d")
+                    normalized["year"] = parsed_date.year
+                    normalized["month"] = parsed_date.month
+                    normalized["day"] = parsed_date.day
+            except Exception:
+                normalized["eventDate"] = event_date.split('T')[0] if 'T' in event_date else event_date
         else:
             normalized["eventDate"] = str(event_date)
 
-    # Scientific name
+    # ===== TAXON/SPECIES INFORMATION =====
+    # Artportalen uses nested taxon.scientificName and taxon.vernacularName
     scientific_name = None
-    if "scientificName" in record:
+    if "taxon" in record and isinstance(record["taxon"], dict):
+        scientific_name = record["taxon"].get("scientificName")
+    elif "scientificName" in record:
         scientific_name = record["scientificName"]
     elif "scientificname" in record:
         scientific_name = record["scientificname"]
-    elif "taxon" in record and isinstance(record["taxon"], dict):
-        scientific_name = record["taxon"].get("scientificName") or record["taxon"].get("scientificname")
     
     if scientific_name:
         normalized["scientificName"] = scientific_name
@@ -62,7 +70,9 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
 
     # Vernacular/common name
     vernacular_name = None
-    if "vernacularName" in record:
+    if "taxon" in record and isinstance(record["taxon"], dict):
+        vernacular_name = record["taxon"].get("vernacularName")
+    elif "vernacularName" in record:
         vernacular_name = record["vernacularName"]
     elif "vernacularname" in record:
         vernacular_name = record["vernacularname"]
@@ -70,27 +80,55 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
         vernacular_name = record["commonName"]
     elif "commonname" in record:
         vernacular_name = record["commonname"]
-    elif "taxon" in record and isinstance(record["taxon"], dict):
-        vernacular_name = record["taxon"].get("vernacularName") or record["taxon"].get("vernacularname") or record["taxon"].get("commonName")
     
     if vernacular_name:
         normalized["vernacularName"] = vernacular_name
 
-    # Location fields
-    if "locality" in record:
-        normalized["locality"] = record["locality"]
-    elif "location" in record and isinstance(record["location"], dict):
-        normalized["locality"] = record["location"].get("locality") or record["location"].get("name")
+    # ===== LOCATION INFORMATION =====
+    # Artportalen uses nested location object
+    location = record.get("location", {})
+    if isinstance(location, dict):
+        # Coordinates - CRITICAL for map display
+        if "decimalLatitude" in location:
+            try:
+                normalized["decimalLatitude"] = float(location["decimalLatitude"])
+                normalized["latitude"] = float(location["decimalLatitude"])  # Also add for map compatibility
+            except (ValueError, TypeError):
+                pass
+        
+        if "decimalLongitude" in location:
+            try:
+                normalized["decimalLongitude"] = float(location["decimalLongitude"])
+                normalized["longitude"] = float(location["decimalLongitude"])  # Also add for map compatibility
+            except (ValueError, TypeError):
+                pass
 
-    if "stateProvince" in record:
-        normalized["stateProvince"] = record["stateProvince"]
-    elif "province" in record:
-        normalized["stateProvince"] = record["province"]
-    elif "stateprovince" in record:
-        normalized["stateProvince"] = record["stateprovince"]
-    elif "location" in record and isinstance(record["location"], dict):
-        normalized["stateProvince"] = record["location"].get("stateProvince") or record["location"].get("province")
+        # State/Province - Artportalen uses county.name
+        if "county" in location and isinstance(location["county"], dict):
+            normalized["stateProvince"] = location["county"].get("name")
+        elif "municipality" in location and isinstance(location["municipality"], dict):
+            normalized["stateProvince"] = location["municipality"].get("name")
+        elif "stateProvince" in location:
+            normalized["stateProvince"] = location["stateProvince"]
+        elif "province" in location:
+            normalized["stateProvince"] = location["province"]
 
+        # Locality - Artportalen uses municipality.name
+        if "municipality" in location and isinstance(location["municipality"], dict):
+            normalized["locality"] = location["municipality"].get("name")
+        elif "locality" in location:
+            normalized["locality"] = location["locality"]
+        elif "name" in location:
+            normalized["locality"] = location["name"]
+
+        # Coordinate uncertainty
+        if "coordinateUncertaintyInMeters" in location:
+            try:
+                normalized["coordinateUncertaintyInMeters"] = float(location["coordinateUncertaintyInMeters"])
+            except (ValueError, TypeError):
+                pass
+
+    # Country code - default to SE for Sweden
     if "countryCode" in record:
         normalized["countryCode"] = record["countryCode"]
     elif "country" in record:
@@ -99,46 +137,58 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
             normalized["countryCode"] = country.upper()
         elif isinstance(country, dict):
             normalized["countryCode"] = country.get("code", country.get("countryCode", "SE"))
+    else:
+        normalized["countryCode"] = "SE"  # Default for Artportalen (Swedish data)
 
-    # Coordinates
-    latitude = None
-    longitude = None
+    # ===== OCCURRENCE INFORMATION =====
+    # Artportalen uses nested occurrence object
+    occurrence = record.get("occurrence", {})
+    if isinstance(occurrence, dict):
+        # Individual count
+        if "individualCount" in occurrence:
+            count_value = occurrence["individualCount"]
+            if isinstance(count_value, str):
+                try:
+                    normalized["individualCount"] = int(count_value)
+                except ValueError:
+                    normalized["individualCount"] = count_value
+            else:
+                normalized["individualCount"] = count_value
+        elif "count" in occurrence:
+            normalized["individualCount"] = occurrence["count"]
+        elif "quantity" in occurrence:
+            normalized["individualCount"] = occurrence["quantity"]
 
-    if "decimalLatitude" in record:
-        latitude = record["decimalLatitude"]
-    elif "latitude" in record:
-        latitude = record["latitude"]
-    elif "coordinates" in record and isinstance(record["coordinates"], dict):
-        latitude = record["coordinates"].get("latitude") or record["coordinates"].get("lat")
-        longitude = record["coordinates"].get("longitude") or record["coordinates"].get("lon") or record["coordinates"].get("lng")
-    elif "location" in record and isinstance(record["location"], dict):
-        coords = record["location"].get("coordinates") or record["location"]
-        if isinstance(coords, dict):
-            latitude = coords.get("latitude") or coords.get("lat")
-            longitude = coords.get("longitude") or coords.get("lon") or coords.get("lng")
-        elif isinstance(coords, list) and len(coords) >= 2:
-            # GeoJSON format: [longitude, latitude]
-            longitude = coords[0]
-            latitude = coords[1]
+        # Occurrence ID
+        if "occurrenceId" in occurrence:
+            normalized["id"] = occurrence["occurrenceId"]
+        elif "occurrenceID" in occurrence:
+            normalized["id"] = occurrence["occurrenceID"]
 
-    if "decimalLongitude" in record:
-        longitude = record["decimalLongitude"]
-    elif "longitude" in record:
-        longitude = record["longitude"]
+        # Occurrence status
+        if "occurrenceStatus" in occurrence and isinstance(occurrence["occurrenceStatus"], dict):
+            normalized["occurrenceStatus"] = occurrence["occurrenceStatus"].get("value")
 
-    if latitude is not None:
-        try:
-            normalized["decimalLatitude"] = float(latitude)
-        except (ValueError, TypeError):
-            pass
+    # Fallback for individual count if not in occurrence
+    if "individualCount" not in normalized:
+        if "individualCount" in record:
+            normalized["individualCount"] = record["individualCount"]
+        elif "count" in record:
+            normalized["individualCount"] = record["count"]
+        elif "quantity" in record:
+            normalized["individualCount"] = record["quantity"]
 
-    if longitude is not None:
-        try:
-            normalized["decimalLongitude"] = float(longitude)
-        except (ValueError, TypeError):
-            pass
+    # ===== IDENTIFICATION INFORMATION =====
+    # Artportalen uses nested identification object
+    identification = record.get("identification", {})
+    if isinstance(identification, dict):
+        if "verified" in identification:
+            normalized["identificationVerified"] = identification["verified"]
+        if "uncertainIdentification" in identification:
+            normalized["uncertainIdentification"] = identification["uncertainIdentification"]
 
-    # Observer/recorder
+    # ===== OBSERVER/RECORDER =====
+    # Check various possible locations for observer info
     if "recordedBy" in record:
         normalized["recordedBy"] = record["recordedBy"]
     elif "observer" in record:
@@ -147,16 +197,11 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
         normalized["recordedBy"] = record["recorder"]
     elif "reportedBy" in record:
         normalized["recordedBy"] = record["reportedBy"]
+    elif "location" in record and isinstance(record["location"], dict):
+        if "recordedBy" in record["location"]:
+            normalized["recordedBy"] = record["location"]["recordedBy"]
 
-    # Individual count
-    if "individualCount" in record:
-        normalized["individualCount"] = record["individualCount"]
-    elif "count" in record:
-        normalized["individualCount"] = record["count"]
-    elif "quantity" in record:
-        normalized["individualCount"] = record["quantity"]
-
-    # Basis of record
+    # ===== BASIS OF RECORD =====
     if "basisOfRecord" in record:
         normalized["basisOfRecord"] = record["basisOfRecord"]
     elif "basisofrecord" in record:
@@ -164,15 +209,26 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
     else:
         normalized["basisOfRecord"] = "HUMAN_OBSERVATION"  # Default for Artportalen
 
-    # Keep original record ID if available
-    if "id" in record:
-        normalized["id"] = record["id"]
-    elif "sightingId" in record:
-        normalized["id"] = record["sightingId"]
-    elif "observationId" in record:
-        normalized["id"] = record["observationId"]
+    # ===== DATASET INFORMATION =====
+    if "datasetName" in record:
+        normalized["datasetName"] = record["datasetName"]
+    elif "dataset" in record:
+        if isinstance(record["dataset"], dict):
+            normalized["datasetName"] = record["dataset"].get("name") or record["dataset"].get("title")
+        else:
+            normalized["datasetName"] = str(record["dataset"])
 
-    # Add source indicator
+    # ===== RECORD ID =====
+    # Keep original record ID if available
+    if "id" not in normalized:
+        if "id" in record:
+            normalized["id"] = record["id"]
+        elif "sightingId" in record:
+            normalized["id"] = record["sightingId"]
+        elif "observationId" in record:
+            normalized["id"] = record["observationId"]
+
+    # ===== SOURCE INDICATOR =====
     normalized["_source"] = "artportalen"
 
     return normalized

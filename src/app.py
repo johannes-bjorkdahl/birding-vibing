@@ -69,10 +69,13 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         'Basis of Record': record.get('basisOfRecord', 'N/A'),
     }
 
-    # Add coordinates if available
-    if record.get('decimalLatitude') and record.get('decimalLongitude'):
-        formatted['latitude'] = record['decimalLatitude']
-        formatted['longitude'] = record['decimalLongitude']
+    # Add coordinates if available (for map display)
+    # Check both decimalLatitude/decimalLongitude and latitude/longitude
+    lat = record.get('latitude') or record.get('decimalLatitude')
+    lon = record.get('longitude') or record.get('decimalLongitude')
+    if lat is not None and lon is not None:
+        formatted['latitude'] = lat
+        formatted['longitude'] = lon
 
     return formatted
 
@@ -221,8 +224,25 @@ def display_search_filters():
     default_start = yesterday
     
     # Use session state to preserve date selections
-    # Initialize defaults if not already set
+    # Initialize defaults if not already set, or reset if dates are outdated/future
+    should_reset_dates = False
     if 'start_date' not in st.session_state or 'end_date' not in st.session_state:
+        should_reset_dates = True
+    else:
+        # Reset if dates are in the future or too old (more than 7 days ago)
+        # This ensures we always default to recent dates for current day data
+        stored_start = st.session_state.start_date
+        stored_end = st.session_state.end_date
+        
+        if stored_end and stored_start:
+            days_old = (today - stored_end).days
+            # Reset if dates are future, very old, or more than 7 days old
+            if stored_end > today or stored_start > today or days_old > 7:
+                should_reset_dates = True
+        else:
+            should_reset_dates = True
+    
+    if should_reset_dates:
         st.session_state.start_date = default_start
         st.session_state.end_date = default_end
     
@@ -340,6 +360,7 @@ def search_observations(search_params: Dict[str, Any]):
         count = result.get('count', 0)
         api_source = result.get('_api_source', 'gbif')
         api_reason = result.get('_api_selection_reason', 'unknown')
+        artportalen_error = result.get('_artportalen_error')
         
         # Show API source info
         if api_source == 'artportalen':
@@ -349,6 +370,9 @@ def search_observations(search_params: Dict[str, Any]):
                 st.info("ℹ️ Artportalen API not configured - using GBIF API (Weekly updates)")
             elif api_reason == 'historical_date_range':
                 st.info("ℹ️ Historical date range - using GBIF API (Weekly updates)")
+            elif artportalen_error:
+                # Show warning if Artportalen failed and we fell back
+                st.warning(f"⚠️ Artportalen API failed ({artportalen_error}) - using GBIF API (Weekly updates)")
             else:
                 st.info("ℹ️ Using GBIF API (Weekly updates)")
         
@@ -359,10 +383,25 @@ def search_observations(search_params: Dict[str, Any]):
             days_behind = (today - search_params['end_date']).days
             
             if days_ahead > 0:
+                # Future dates - check if it's way in the future
+                if days_ahead > 365:
+                    st.warning(
+                        f"⚠️ No observations found for {search_params['start_date']} to {search_params['end_date']}. "
+                        f"These dates are in the future. "
+                        f"**Available data through Artportalen API currently goes up to approximately May 2020.** "
+                        f"Please try searching with dates from 2020 or earlier, or use GBIF API for historical data."
+                    )
+                else:
+                    st.warning(
+                        f"No observations found for {search_params['start_date']} to {search_params['end_date']}. "
+                        f"This date appears to be in the future. The most recent available data may be from earlier dates. "
+                        "Try selecting a date range from 2020 or earlier."
+                    )
+            elif api_source == 'artportalen' and days_behind > 1800:  # More than ~5 years ago from today
                 st.warning(
-                    f"No observations found for {search_params['start_date']} to {search_params['end_date']}. "
-                    f"This date appears to be in the future. The most recent available data may be from earlier dates. "
-                    "Try selecting a date range from the past year."
+                    f"⚠️ No observations found for {search_params['start_date']} to {search_params['end_date']}. "
+                    f"**Note:** Artportalen API data availability is limited. The most recent data available may be from 2020 or earlier. "
+                    f"Try searching with dates from 2018-2020, or use GBIF API which has more historical data."
                 )
             elif days_behind <= 2 and api_source == 'gbif':
                 st.info(
@@ -373,7 +412,9 @@ def search_observations(search_params: Dict[str, Any]):
             else:
                 st.warning(
                     f"No observations found for the date range {search_params['start_date']} to {search_params['end_date']}. "
-                    "Try adjusting your date range or filters."
+                    "Try adjusting your date range or filters. "
+                    f"**Tip:** Artportalen API data is available up to approximately May 2020. "
+                    f"For dates after that, try using GBIF API or search with earlier dates."
                 )
             # Still store the result so the UI can show the empty state
             st.session_state.observations_data = result
