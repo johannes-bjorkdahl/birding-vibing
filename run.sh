@@ -5,4 +5,5 @@
 export PATH="$HOME/.local/bin:$PATH"
 
 # Run Streamlit using UV (automatically uses .venv created by uv sync)
-uv run streamlit run src/app.py
+# Using port 8502 to avoid conflicts with other Streamlit applications
+uv run streamlit run src/app.py --server.port 8502

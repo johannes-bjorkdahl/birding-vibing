@@ -153,51 +153,54 @@ def display_search_filters():
     """Display search filters and return search parameters."""
     st.sidebar.header("Search Filters")
 
-    # Year range
-    st.sidebar.subheader("Time Period")
-    current_year = datetime.now().year
-
-    date_option = st.sidebar.radio(
-        "Select time period",
-        ["Current year", "Last 5 years", "Custom range", "All time"]
+    # Date range filtering
+    st.sidebar.subheader("Date Range")
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    
+    # Default to a date range that should have data
+    # Use system date, but if it's clearly in the future (year > current reasonable year),
+    # default to recent dates from the previous year
+    if today.year > 2024:  # If system date seems wrong (future), use 2024 dates
+        # Default to a recent date range from 2024
+        default_end = date(2024, 10, 31)
+        default_start = date(2024, 10, 30)
+    else:
+        default_end = today
+        default_start = yesterday
+    
+    # Use session state to preserve date selections
+    # Reset to defaults if current dates are clearly in the future and have no data
+    if 'start_date' not in st.session_state or 'end_date' not in st.session_state:
+        st.session_state.start_date = default_start
+        st.session_state.end_date = default_end
+    elif st.session_state.start_date.year > 2024 or st.session_state.end_date.year > 2024:
+        # If stored dates are in the future, reset to sensible defaults
+        st.session_state.start_date = default_start
+        st.session_state.end_date = default_end
+    
+    start_date = st.sidebar.date_input(
+        "Start Date",
+        value=st.session_state.start_date,
+        max_value=today,
+        help="Select the start date for observations"
     )
-
-    start_year = None
-    end_year = None
-    month = None
-
-    if date_option == "Current year":
-        start_year = current_year
-        end_year = current_year
-    elif date_option == "Last 5 years":
-        start_year = current_year - 5
-        end_year = current_year
-    elif date_option == "Custom range":
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            start_year = st.number_input(
-                "From year",
-                min_value=1900,
-                max_value=current_year,
-                value=current_year - 1
-            )
-        with col2:
-            end_year = st.number_input(
-                "To year",
-                min_value=1900,
-                max_value=current_year,
-                value=current_year
-            )
-
-        # Optional month filter
-        month_option = st.sidebar.selectbox(
-            "Month (optional)",
-            ["All months", "January", "February", "March", "April", "May", "June",
-             "July", "August", "September", "October", "November", "December"]
-        )
-        if month_option != "All months":
-            month = ["January", "February", "March", "April", "May", "June",
-                    "July", "August", "September", "October", "November", "December"].index(month_option) + 1
+    
+    end_date = st.sidebar.date_input(
+        "End Date",
+        value=st.session_state.end_date,
+        max_value=today,
+        help="Select the end date for observations"
+    )
+    
+    # Validate date range
+    if start_date > end_date:
+        st.sidebar.error("Start date must be before or equal to end date.")
+        end_date = start_date
+    
+    # Update session state
+    st.session_state.start_date = start_date
+    st.session_state.end_date = end_date
 
     # Max results
     max_results = st.sidebar.slider(
@@ -209,34 +212,82 @@ def display_search_filters():
         help="Number of observations to retrieve (GBIF max: 300 per request)"
     )
 
-    # Province/county filter
+    # Location filters
     st.sidebar.subheader("Location Filter")
     province = st.sidebar.text_input(
         "State/Province (optional)",
         help="Enter Swedish county/province name (e.g., 'Skåne', 'Stockholm')"
     )
+    
+    locality = st.sidebar.text_input(
+        "Locality (optional)",
+        help="Enter city/town name for more specific location filtering"
+    )
 
     return {
-        'start_year': start_year,
-        'end_year': end_year,
-        'month': month,
+        'start_date': start_date,
+        'end_date': end_date,
         'max_results': max_results,
-        'province': province if province else None
+        'province': province if province else None,
+        'locality': locality if locality else None
     }
 
 
 def search_observations(search_params: Dict[str, Any]):
     """Execute observation search with given parameters."""
     with st.spinner("Searching GBIF for bird observations from Artportalen..."):
-        result = st.session_state.api_client.search_occurrences(
-            taxon_key=Config.BIRDS_TAXON_KEY,
-            start_year=search_params['start_year'],
-            end_year=search_params['end_year'],
-            month=search_params['month'],
-            country=Config.COUNTRY_CODE,
-            limit=search_params['max_results'],
-            state_province=search_params['province']
-        )
+        start_date = search_params['start_date']
+        end_date = search_params['end_date']
+        today = datetime.now().date()
+        days_span = (end_date - start_date).days
+        is_recent = (today - end_date).days <= 7
+        
+        # For recent date ranges (within last 7 days), query each day separately
+        # and combine results, as eventDate may not work reliably for very recent dates
+        if is_recent and days_span <= 7 and days_span >= 0:
+            # Query each day separately and combine
+            all_results = []
+            total_count = 0
+            current_date = start_date
+            
+            while current_date <= end_date:
+                day_result = st.session_state.api_client.search_occurrences(
+                    taxon_key=Config.BIRDS_TAXON_KEY,
+                    start_date=current_date,  # Single date uses year/month/day
+                    country=Config.COUNTRY_CODE,
+                    limit=min(300, search_params['max_results']),
+                    state_province=search_params['province'],
+                    locality=search_params.get('locality')
+                )
+                
+                if 'error' not in day_result:
+                    day_results = day_result.get('results', [])
+                    all_results.extend(day_results)
+                    total_count += day_result.get('count', 0)
+                
+                current_date += timedelta(days=1)
+                
+                # Limit total results to max_results
+                if len(all_results) >= search_params['max_results']:
+                    all_results = all_results[:search_params['max_results']]
+                    break
+            
+            # Combine results
+            result = {
+                'results': all_results,
+                'count': total_count
+            }
+        else:
+            # For older date ranges, use normal date range query
+            result = st.session_state.api_client.search_occurrences(
+                taxon_key=Config.BIRDS_TAXON_KEY,
+                start_date=start_date,
+                end_date=end_date,
+                country=Config.COUNTRY_CODE,
+                limit=search_params['max_results'],
+                state_province=search_params['province'],
+                locality=search_params.get('locality')
+            )
 
         if 'error' in result:
             st.error(f"Search failed: {result['error']}")
@@ -246,6 +297,32 @@ def search_observations(search_params: Dict[str, Any]):
                 "- GBIF API temporarily unavailable\n"
                 "- Invalid search parameters"
             )
+            return
+
+        # Check if we got results - GBIF API returns results in 'results' array
+        results = result.get('results', [])
+        count = result.get('count', 0)
+        
+        # If no results but no error, check if we're querying future dates
+        if not results and count == 0:
+            today = datetime.now().date()
+            # If querying recent dates (within last 30 days) with no results, might be future dates
+            days_ahead = (search_params['start_date'] - today).days
+            if days_ahead > 0:
+                # Querying future dates - try to find most recent date with data
+                st.warning(
+                    f"No observations found for {search_params['start_date']} to {search_params['end_date']}. "
+                    f"This date appears to be in the future. The most recent available data may be from earlier dates. "
+                    "Try selecting a date range from the past year."
+                )
+            else:
+                st.warning(
+                    f"No observations found for the date range {search_params['start_date']} to {search_params['end_date']}. "
+                    "Try adjusting your date range or filters."
+                )
+            # Still store the result so the UI can show the empty state
+            st.session_state.observations_data = result
+            st.session_state.last_search_params = search_params
             return
 
         # Store results in session state
@@ -267,7 +344,7 @@ def display_observations():
 
         **Features:**
         - 🔍 Search 116+ million observations
-        - 📅 Filter by year, month, and location
+        - 📅 Filter by date range and location
         - 🗺️ View observations on an interactive map with clustering
         - 📍 Automatic grouping of nearby observations for better visualization
         - 💾 Download data as CSV
@@ -311,32 +388,13 @@ def display_observations():
             year_range = f"{min(years)}-{max(years)}"
             st.metric("Year Range", year_range)
 
-    # Display observations table
-    st.subheader("Observations")
-
     # Format records for display
     formatted_records = [format_observation_record(record) for record in results]
 
     if formatted_records:
         df = pd.DataFrame(formatted_records)
 
-        # Display as interactive table
-        st.dataframe(
-            df,
-            width='stretch',
-            hide_index=True
-        )
-
-        # Download button
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download as CSV",
-            data=csv,
-            file_name=f"bird_observations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv"
-        )
-
-        # Display map if coordinates are available
+        # Display map if coordinates are available (before table)
         if 'latitude' in df.columns and 'longitude' in df.columns:
             st.subheader("Observation Locations")
 
@@ -361,6 +419,25 @@ def display_observations():
                 )
             else:
                 st.info("No coordinate data available for mapping.")
+
+        # Display observations table
+        st.subheader("Observations")
+
+        # Display as interactive table
+        st.dataframe(
+            df,
+            width='stretch',
+            hide_index=True
+        )
+
+        # Download button
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download as CSV",
+            data=csv,
+            file_name=f"bird_observations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
 
         # Pagination info
         if total_count > len(results):

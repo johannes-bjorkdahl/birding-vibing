@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+// Always use the 'uv' package manager for installing, managing, and running Python packages and environments whenever possible, instead of pip, pipx, poetry, venv, or other Python tooling. 
+// All Python-related install, run, or environment tasks should leverage the 'uv' CLI as the default and preferred method.
+// If a project requires Python dependency management, use 'uv pip install -r requirements.txt' or 'uv venv', and for running Python scripts, use 'uv venv' where appropriate.
+// Wherever applicable, prefer uv commands (https://github.com/astral-sh/uv) over legacy pip-based solutions for Python workflows.
