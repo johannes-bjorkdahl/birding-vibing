@@ -13,15 +13,33 @@ from streamlit_folium import st_folium
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import Config
-from src.api_client import GBIFAPIClient
+from src.api.gbif_client import GBIFAPIClient
+from src.api.artportalen_client import ArtportalenAPIClient
+from src.api.unified_client import UnifiedAPIClient
 
 
 def init_session_state():
     """Initialize session state variables."""
-    if 'api_client' not in st.session_state:
-        st.session_state.api_client = GBIFAPIClient(
+    if 'unified_client' not in st.session_state:
+        # Initialize GBIF client
+        gbif_client = GBIFAPIClient(
             Config.GBIF_API_BASE_URL,
             Config.DATASET_KEY
+        )
+        
+        # Initialize Artportalen client if API key is available
+        artportalen_client = None
+        if Config.ARTPORTALEN_API_KEY:
+            artportalen_client = ArtportalenAPIClient(
+                Config.ARTPORTALEN_API_BASE_URL,
+                Config.ARTPORTALEN_API_KEY
+            )
+        
+        # Create unified client
+        st.session_state.unified_client = UnifiedAPIClient(
+            gbif_client=gbif_client,
+            artportalen_client=artportalen_client,
+            date_threshold_days=Config.ARTPORTALEN_DATE_THRESHOLD_DAYS
         )
 
     if 'observations_data' not in st.session_state:
@@ -29,6 +47,9 @@ def init_session_state():
 
     if 'last_search_params' not in st.session_state:
         st.session_state.last_search_params = None
+    
+    if 'api_selection' not in st.session_state:
+        st.session_state.api_selection = "auto"
 
 
 def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
@@ -137,13 +158,19 @@ def display_about_section():
         **Artportalen - Swedish Species Observation System**
 
         - **116+ million** observations
-        - **Weekly updates** from GBIF
+        - **Dual API support**: Real-time (Artportalen) + Historical (GBIF)
         - **Open data** (CC0 license)
         - Managed by SLU Artdatabanken
-
-        **No API key required!**
-        This app uses the public GBIF API.
         """)
+
+        # Show API availability
+        api_info = st.session_state.unified_client.get_current_api_info()
+        st.markdown("**API Status:**")
+        st.markdown(f"- ✅ GBIF API: Available")
+        if api_info["artportalen_available"]:
+            st.markdown(f"- ✅ Artportalen API: Available (Real-time)")
+        else:
+            st.markdown(f"- ⚠️ Artportalen API: Not configured (using GBIF only)")
 
         if st.button("View Dataset on GBIF"):
             st.markdown(f"[Open GBIF Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})")
@@ -152,6 +179,37 @@ def display_about_section():
 def display_search_filters():
     """Display search filters and return search parameters."""
     st.sidebar.header("Search Filters")
+
+    # API Selection
+    st.sidebar.subheader("Data Source")
+    api_info = st.session_state.unified_client.get_current_api_info()
+    
+    api_options = ["auto"]
+    api_labels = ["Auto (Smart Selection)"]
+    
+    if api_info["artportalen_available"]:
+        api_options.extend(["artportalen", "gbif"])
+        api_labels.extend(["Artportalen (Real-time)", "GBIF (Historical)"])
+    else:
+        api_options.append("gbif")
+        api_labels.append("GBIF (Historical)")
+    
+    api_selection_idx = api_options.index(st.session_state.api_selection) if st.session_state.api_selection in api_options else 0
+    selected_api = st.sidebar.selectbox(
+        "API Source",
+        options=api_options,
+        format_func=lambda x: api_labels[api_options.index(x)],
+        index=api_selection_idx,
+        help="Auto: Recent dates use Artportalen (real-time), older dates use GBIF (weekly updates)"
+    )
+    st.session_state.api_selection = selected_api
+    
+    if selected_api == "auto":
+        st.sidebar.caption(f"🔄 Auto-selection: Recent ({Config.ARTPORTALEN_DATE_THRESHOLD_DAYS} days) → Artportalen, Older → GBIF")
+    elif selected_api == "artportalen":
+        st.sidebar.caption("⚡ Using Artportalen API (Real-time data)")
+    else:
+        st.sidebar.caption("📚 Using GBIF API (Weekly updates)")
 
     # Date range filtering
     st.sidebar.subheader("Date Range")
@@ -229,91 +287,99 @@ def display_search_filters():
         'end_date': end_date,
         'max_results': max_results,
         'province': province if province else None,
-        'locality': locality if locality else None
+        'locality': locality if locality else None,
+        'api_selection': selected_api
     }
 
 
 def search_observations(search_params: Dict[str, Any]):
     """Execute observation search with given parameters."""
-    with st.spinner("Searching GBIF for bird observations from Artportalen..."):
-        start_date = search_params['start_date']
-        end_date = search_params['end_date']
-        today = datetime.now().date()
-        days_span = (end_date - start_date).days
-        is_recent = (today - end_date).days <= 7
-        
-        # For recent date ranges (within last 7 days), query each day separately
-        # and combine results, as eventDate may not work reliably for very recent dates
-        if is_recent and days_span <= 7 and days_span >= 0:
-            # Query each day separately and combine
-            all_results = []
-            total_count = 0
-            current_date = start_date
-            
-            while current_date <= end_date:
-                day_result = st.session_state.api_client.search_occurrences(
-                    taxon_key=Config.BIRDS_TAXON_KEY,
-                    start_date=current_date,  # Single date uses year/month/day
-                    country=Config.COUNTRY_CODE,
-                    limit=min(300, search_params['max_results']),
-                    state_province=search_params['province'],
-                    locality=search_params.get('locality')
-                )
-                
-                if 'error' not in day_result:
-                    day_results = day_result.get('results', [])
-                    all_results.extend(day_results)
-                    total_count += day_result.get('count', 0)
-                
-                current_date += timedelta(days=1)
-                
-                # Limit total results to max_results
-                if len(all_results) >= search_params['max_results']:
-                    all_results = all_results[:search_params['max_results']]
-                    break
-            
-            # Combine results
-            result = {
-                'results': all_results,
-                'count': total_count
-            }
-        else:
-            # For older date ranges, use normal date range query
-            result = st.session_state.api_client.search_occurrences(
-                taxon_key=Config.BIRDS_TAXON_KEY,
-                start_date=start_date,
-                end_date=end_date,
-                country=Config.COUNTRY_CODE,
-                limit=search_params['max_results'],
-                state_province=search_params['province'],
-                locality=search_params.get('locality')
-            )
+    start_date = search_params['start_date']
+    end_date = search_params['end_date']
+    api_selection = search_params.get('api_selection', 'auto')
+    
+    # Determine which API will be used for the spinner message
+    api_info = st.session_state.unified_client.get_current_api_info()
+    use_artportalen, reason = st.session_state.unified_client._should_use_artportalen(
+        start_date, end_date, api_selection
+    )
+    
+    if use_artportalen:
+        spinner_msg = "Searching Artportalen API for real-time bird observations..."
+    else:
+        spinner_msg = "Searching GBIF API for bird observations from Artportalen..."
+    
+    with st.spinner(spinner_msg):
+        # Use unified client with forced API selection if specified
+        result = st.session_state.unified_client.search_occurrences(
+            taxon_key=Config.BIRDS_TAXON_KEY,
+            taxon_id=Config.ARTPORTALEN_BIRDS_TAXON_ID,
+            start_date=start_date,
+            end_date=end_date,
+            country=Config.COUNTRY_CODE,
+            limit=search_params['max_results'],
+            state_province=search_params['province'],
+            locality=search_params.get('locality'),
+            force_api=api_selection
+        )
 
         if 'error' in result:
-            st.error(f"Search failed: {result['error']}")
-            st.info(
-                "Common issues:\n"
-                "- Network connectivity problems\n"
-                "- GBIF API temporarily unavailable\n"
-                "- Invalid search parameters"
-            )
+            api_source = result.get('_api_source', 'unknown')
+            error_msg = result['error']
+            
+            st.error(f"Search failed ({api_source.upper()}): {error_msg}")
+            
+            if api_source == 'artportalen':
+                st.info(
+                    "Artportalen API issues:\n"
+                    "- Check your API key configuration\n"
+                    "- Verify API key is valid and active\n"
+                    "- API may be temporarily unavailable\n"
+                    "\nFalling back to GBIF API..."
+                )
+            else:
+                st.info(
+                    "Common issues:\n"
+                    "- Network connectivity problems\n"
+                    "- GBIF API temporarily unavailable\n"
+                    "- Invalid search parameters"
+                )
             return
 
-        # Check if we got results - GBIF API returns results in 'results' array
+        # Check if we got results
         results = result.get('results', [])
         count = result.get('count', 0)
+        api_source = result.get('_api_source', 'gbif')
+        api_reason = result.get('_api_selection_reason', 'unknown')
         
-        # If no results but no error, check if we're querying future dates
+        # Show API source info
+        if api_source == 'artportalen':
+            st.success("✅ Using Artportalen API (Real-time data)")
+        else:
+            if api_reason == 'artportalen_unavailable':
+                st.info("ℹ️ Artportalen API not configured - using GBIF API (Weekly updates)")
+            elif api_reason == 'historical_date_range':
+                st.info("ℹ️ Historical date range - using GBIF API (Weekly updates)")
+            else:
+                st.info("ℹ️ Using GBIF API (Weekly updates)")
+        
+        # If no results but no error, check if we're querying future dates or very recent dates
         if not results and count == 0:
             today = datetime.now().date()
-            # If querying recent dates (within last 30 days) with no results, might be future dates
             days_ahead = (search_params['start_date'] - today).days
+            days_behind = (today - search_params['end_date']).days
+            
             if days_ahead > 0:
-                # Querying future dates - try to find most recent date with data
                 st.warning(
                     f"No observations found for {search_params['start_date']} to {search_params['end_date']}. "
                     f"This date appears to be in the future. The most recent available data may be from earlier dates. "
                     "Try selecting a date range from the past year."
+                )
+            elif days_behind <= 2 and api_source == 'gbif':
+                st.info(
+                    f"No observations found for {search_params['start_date']} to {search_params['end_date']}. "
+                    "Very recent dates may not be available in GBIF API as it updates weekly. "
+                    "Try using Artportalen API for real-time data, or search with dates from a few days ago."
                 )
             else:
                 st.warning(
@@ -362,10 +428,17 @@ def display_observations():
     # Check for results
     results = data.get('results', [])
     total_count = data.get('count', 0)
+    api_source = data.get('_api_source', 'gbif')
 
     if not results:
         st.warning("No observations found for the given search criteria. Try adjusting your filters.")
         return
+
+    # Show data source badge
+    if api_source == 'artportalen':
+        st.success("📡 **Data Source:** Artportalen API (Real-time observations)")
+    else:
+        st.info("📚 **Data Source:** GBIF API (Weekly updates from Artportalen)")
 
     # Summary metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -441,14 +514,17 @@ def display_observations():
 
         # Pagination info
         if total_count > len(results):
+            api_name = "Artportalen" if api_source == 'artportalen' else "GBIF"
+            max_limit = 1000 if api_source == 'artportalen' else 300
             st.info(
                 f"Showing {len(results)} of {total_count:,} total observations. "
-                f"The GBIF API limits results to 300 per request. "
+                f"The {api_name} API limits results to {max_limit} per request. "
                 f"Use more specific filters to narrow your search."
             )
 
     # Show raw data in expander
-    with st.expander("View Raw GBIF API Response"):
+    api_name = "Artportalen" if api_source == 'artportalen' else "GBIF"
+    with st.expander(f"View Raw {api_name} API Response"):
         st.json(data)
 
 
@@ -468,7 +544,7 @@ def main():
     st.title("🐦 Swedish Bird Observations")
     st.markdown(
         "Explore bird observations from **Artportalen** (Swedish Species Observation System) "
-        "via the **GBIF public API** - no API key required!"
+        "with **dual API support**: Real-time data via Artportalen API or historical data via GBIF API."
     )
 
     # About section
@@ -486,11 +562,20 @@ def main():
 
     # Footer
     st.markdown("---")
-    st.markdown(
-        "Data from [Artportalen](https://www.artportalen.se/) via "
-        "[GBIF](https://www.gbif.org/) • "
-        f"[View Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})"
-    )
+    api_info = st.session_state.unified_client.get_current_api_info()
+    if api_info["artportalen_available"]:
+        st.markdown(
+            "Data from [Artportalen](https://www.artportalen.se/) via "
+            "[Artportalen API](https://api-portal.artdatabanken.se/) (real-time) and "
+            "[GBIF](https://www.gbif.org/) (historical) • "
+            f"[View Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})"
+        )
+    else:
+        st.markdown(
+            "Data from [Artportalen](https://www.artportalen.se/) via "
+            "[GBIF](https://www.gbif.org/) • "
+            f"[View Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})"
+        )
 
 
 if __name__ == "__main__":
