@@ -141,15 +141,12 @@ class UnifiedAPIClient:
                 else:
                     # If Artportalen fails, preserve error and fallback to GBIF
                     error_msg = result.get("error", "Unknown error")
-                    # Store error for display even when falling back
-                    artportalen_error = error_msg
                     # Continue to GBIF fallback below
                     use_artportalen = False
                     reason = f"artportalen_failed: {error_msg}"
 
             except Exception as e:
                 # Exception occurred, preserve error and fallback to GBIF
-                artportalen_error = str(e)
                 use_artportalen = False
                 reason = f"artportalen_exception: {str(e)}"
 

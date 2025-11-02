@@ -8,6 +8,16 @@ from pathlib import Path
 import folium
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
+import logging
+import traceback
+
+# Set up logging to stderr so errors appear in terminal
+logging.basicConfig(
+    level=logging.ERROR,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stderr
+)
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -50,10 +60,32 @@ def init_session_state():
     
     if 'api_selection' not in st.session_state:
         st.session_state.api_selection = "auto"
+    
+    if 'auto_fetched' not in st.session_state:
+        st.session_state.auto_fetched = False
 
 
 def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """Format a single observation record for display."""
+    # Handle Individual Count - convert to numeric or pd.NA
+    individual_count = record.get('individualCount')
+    if individual_count is None or individual_count == '' or individual_count == 'N/A':
+        individual_count_val = pd.NA
+    else:
+        try:
+            # Try to convert to int, fall back to float if needed
+            if isinstance(individual_count, str):
+                # Remove whitespace and check if empty
+                individual_count = individual_count.strip()
+                if individual_count == '':
+                    individual_count_val = pd.NA
+                else:
+                    individual_count_val = int(float(individual_count))
+            else:
+                individual_count_val = int(float(individual_count))
+        except (ValueError, TypeError):
+            individual_count_val = pd.NA
+    
     formatted = {
         'Date': record.get('eventDate', 'N/A'),
         'Year': record.get('year', 'N/A'),
@@ -65,7 +97,7 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         'State/Province': record.get('stateProvince', 'N/A'),
         'Country': record.get('countryCode', 'N/A'),
         'Observer': record.get('recordedBy', 'N/A'),
-        'Individual Count': record.get('individualCount') if record.get('individualCount') is not None else pd.NA,
+        'Individual Count': individual_count_val,
         'Basis of Record': record.get('basisOfRecord', 'N/A'),
     }
 
@@ -303,34 +335,35 @@ def display_search_filters():
 
 def search_observations(search_params: Dict[str, Any]):
     """Execute observation search with given parameters."""
-    start_date = search_params['start_date']
-    end_date = search_params['end_date']
-    api_selection = search_params.get('api_selection', 'auto')
-    
-    # Determine which API will be used for the spinner message
-    api_info = st.session_state.unified_client.get_current_api_info()
-    use_artportalen, reason = st.session_state.unified_client._should_use_artportalen(
-        start_date, end_date, api_selection
-    )
-    
-    if use_artportalen:
-        spinner_msg = "Searching Artportalen API for real-time bird observations..."
-    else:
-        spinner_msg = "Searching GBIF API for bird observations from Artportalen..."
-    
-    with st.spinner(spinner_msg):
-        # Use unified client with forced API selection if specified
-        result = st.session_state.unified_client.search_occurrences(
-            taxon_key=Config.BIRDS_TAXON_KEY,
-            taxon_id=Config.ARTPORTALEN_BIRDS_TAXON_ID,
-            start_date=start_date,
-            end_date=end_date,
-            country=Config.COUNTRY_CODE,
-            limit=search_params['max_results'],
-            state_province=search_params['province'],
-            locality=search_params.get('locality'),
-            force_api=api_selection
+    try:
+        start_date = search_params['start_date']
+        end_date = search_params['end_date']
+        api_selection = search_params.get('api_selection', 'auto')
+        
+        # Determine which API will be used for the spinner message
+        api_info = st.session_state.unified_client.get_current_api_info()
+        use_artportalen, reason = st.session_state.unified_client._should_use_artportalen(
+            start_date, end_date, api_selection
         )
+        
+        if use_artportalen:
+            spinner_msg = "Searching Artportalen API for real-time bird observations..."
+        else:
+            spinner_msg = "Searching GBIF API for bird observations from Artportalen..."
+        
+        with st.spinner(spinner_msg):
+            # Use unified client with forced API selection if specified
+            result = st.session_state.unified_client.search_occurrences(
+                taxon_key=Config.BIRDS_TAXON_KEY,
+                taxon_id=Config.ARTPORTALEN_BIRDS_TAXON_ID,
+                start_date=start_date,
+                end_date=end_date,
+                country=Config.COUNTRY_CODE,
+                limit=search_params['max_results'],
+                state_province=search_params['province'],
+                locality=search_params.get('locality'),
+                force_api=api_selection
+            )
 
         if 'error' in result:
             api_source = result.get('_api_source', 'unknown')
@@ -424,6 +457,13 @@ def search_observations(search_params: Dict[str, Any]):
         # Store results in session state
         st.session_state.observations_data = result
         st.session_state.last_search_params = search_params
+        
+    except Exception as e:
+        error_msg = f"Error in search_observations: {str(e)}"
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
+        st.error(f"An error occurred during search: {str(e)}")
+        return
 
 
 def display_observations():
@@ -496,6 +536,10 @@ def display_observations():
 
     if formatted_records:
         df = pd.DataFrame(formatted_records)
+        
+        # Ensure Individual Count column is properly typed (Int64 nullable integer)
+        if 'Individual Count' in df.columns:
+            df['Individual Count'] = df['Individual Count'].astype('Int64')
 
         # Display map if coordinates are available (before table)
         if 'latitude' in df.columns and 'longitude' in df.columns:
@@ -582,6 +626,20 @@ def main():
 
     # Search filters
     search_params = display_search_filters()
+
+    # Auto-fetch current day's observations on first page load
+    if not st.session_state.auto_fetched:
+        today = datetime.now().date()
+        auto_search_params = {
+            'start_date': today,
+            'end_date': today,
+            'max_results': search_params['max_results'],
+            'province': None,
+            'locality': None,
+            'api_selection': search_params['api_selection']
+        }
+        search_observations(auto_search_params)
+        st.session_state.auto_fetched = True
 
     # Search button
     if st.sidebar.button("🔍 Search", type="primary", width='stretch'):
