@@ -216,24 +216,13 @@ def display_search_filters():
     today = datetime.now().date()
     yesterday = today - timedelta(days=1)
     
-    # Default to a date range that should have data
-    # Use system date, but if it's clearly in the future (year > current reasonable year),
-    # default to recent dates from the previous year
-    if today.year > 2024:  # If system date seems wrong (future), use 2024 dates
-        # Default to a recent date range from 2024
-        default_end = date(2024, 10, 31)
-        default_start = date(2024, 10, 30)
-    else:
-        default_end = today
-        default_start = yesterday
+    # Default to current day and the day before
+    default_end = today
+    default_start = yesterday
     
     # Use session state to preserve date selections
-    # Reset to defaults if current dates are clearly in the future and have no data
+    # Initialize defaults if not already set
     if 'start_date' not in st.session_state or 'end_date' not in st.session_state:
-        st.session_state.start_date = default_start
-        st.session_state.end_date = default_end
-    elif st.session_state.start_date.year > 2024 or st.session_state.end_date.year > 2024:
-        # If stored dates are in the future, reset to sensible defaults
         st.session_state.start_date = default_start
         st.session_state.end_date = default_end
     
