@@ -60,16 +60,16 @@ That's it! No API keys or configuration needed.
 
 **Option 2: Using UV directly**
 ```bash
-uv run streamlit run src/app.py
+uv run streamlit run src/app.py --server.port 8502
 ```
 
 **Option 3: Manual activation**
 ```bash
 source .venv/bin/activate
-streamlit run src/app.py
+streamlit run src/app.py --server.port 8502
 ```
 
-The application will open in your default web browser at `http://localhost:8501`.
+The application will open in your default web browser at `http://localhost:8502`.
 
 ### Using the Application
 

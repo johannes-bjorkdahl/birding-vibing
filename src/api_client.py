@@ -28,23 +28,29 @@ class GBIFAPIClient:
         start_year: Optional[int] = None,
         end_year: Optional[int] = None,
         month: Optional[int] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
         country: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
-        state_province: Optional[str] = None
+        state_province: Optional[str] = None,
+        locality: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Search for bird observations in the dataset.
 
         Args:
             taxon_key: GBIF taxon key (e.g., 212 for all birds/Aves)
-            start_year: Start year for observations
-            end_year: End year for observations
-            month: Month filter (1-12)
+            start_year: Start year for observations (backward compatibility)
+            end_year: End year for observations (backward compatibility)
+            month: Month filter (1-12) (backward compatibility)
+            start_date: Start date for observations (YYYY-MM-DD)
+            end_date: End date for observations (YYYY-MM-DD)
             country: ISO country code (e.g., 'SE' for Sweden)
             limit: Maximum number of results to return (max 300)
             offset: Offset for pagination
             state_province: State or province name filter
+            locality: Locality (city/town) name filter
 
         Returns:
             Dict containing search results and metadata
@@ -61,7 +67,38 @@ class GBIFAPIClient:
         if taxon_key:
             params["taxonKey"] = taxon_key
 
-        if start_year:
+        # Use date range filtering
+        # GBIF API eventDate parameter format: eventDate=YYYY-MM-DD,YYYY-MM-DD (inclusive range)
+        # For recent dates (within 7 days), query each day separately and combine results
+        # as eventDate ranges may not work reliably for very recent dates
+        from datetime import timedelta
+        today = date.today()
+        
+        if start_date and end_date:
+            # Check if this is a recent date range (within last 7 days)
+            days_span = (end_date - start_date).days
+            is_recent = (today - end_date).days <= 7
+            
+            if is_recent and days_span <= 7:
+                # For recent date ranges, we'll make separate queries per day
+                # This is handled in the calling code by making multiple API calls
+                # For now, we'll use eventDate but note that separate queries might be needed
+                start_date_str = start_date.isoformat()
+                end_date_str = end_date.isoformat()
+                params["eventDate"] = f"{start_date_str},{end_date_str}"
+            else:
+                # For older or wider date ranges, use eventDate
+                start_date_str = start_date.isoformat()
+                end_date_str = end_date.isoformat()
+                params["eventDate"] = f"{start_date_str},{end_date_str}"
+        elif start_date:
+            # Single date - use year/month/day for better precision
+            # This is more reliable than eventDate for single dates, especially recent ones
+            params["year"] = start_date.year
+            params["month"] = start_date.month
+            params["day"] = start_date.day
+        elif start_year:
+            # Backward compatibility: use year/month parameters
             params["year"] = f"{start_year},{end_year if end_year else start_year}"
 
         if month:
@@ -73,11 +110,25 @@ class GBIFAPIClient:
         if state_province:
             params["stateProvince"] = state_province
 
+        if locality:
+            params["locality"] = locality
+
         try:
             with httpx.Client(timeout=30.0) as client:
+                # Build the full URL for debugging (optional - can be removed in production)
+                # httpx automatically handles URL encoding of parameters
                 response = client.get(endpoint, params=params, headers=self.headers)
                 response.raise_for_status()
-                return response.json()
+                data = response.json()
+                
+                # GBIF API returns results in 'results' array and count
+                # Ensure we always return the expected structure
+                if 'results' not in data:
+                    data['results'] = []
+                if 'count' not in data:
+                    data['count'] = len(data.get('results', []))
+                
+                return data
         except httpx.HTTPStatusError as e:
             return {
                 "error": f"HTTP error {e.response.status_code}: {e.response.text}",
