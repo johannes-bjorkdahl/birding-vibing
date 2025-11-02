@@ -15,6 +15,17 @@ A Python application for exploring Swedish bird observations from Artportalen wi
 - 🎯 User-friendly Streamlit interface
 - 🌍 **GBIF API requires no API key** - works out of the box!
 
+## API Documentation & Troubleshooting
+
+**For troubleshooting API issues, see:**
+- [`docs/API_TROUBLESHOOTING.md`](docs/API_TROUBLESHOOTING.md) - Complete guide for API discovery, format, and debugging
+- [`docs/API_CHANGES_LOG.md`](docs/API_CHANGES_LOG.md) - Log of API-related changes and fixes
+
+**Quick API Info:**
+- API Info Endpoint: `https://api.artdatabanken.se/species-observation-system/v1/api/ApiInfo`
+- GitHub Documentation: https://github.com/biodiversitydata-se/SOS
+- Search Filter Docs: https://github.com/biodiversitydata-se/SOS/blob/master/Docs/SearchFilter.md
+
 ## About the Data
 
 This application accesses the **Artportalen** dataset, Sweden's national species observation system, through two APIs:

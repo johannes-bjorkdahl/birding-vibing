@@ -1,0 +1,55 @@
+# Cursor Rules for Birding Vibing Project
+
+## API Integration Rules
+
+### Artportalen API Format Requirements
+
+**CRITICAL:** The Artportalen API uses nested objects for filters, NOT flat parameters.
+
+**Always use:**
+- `{"taxon": {"ids": [...]}}` (NOT `{"taxonIds": [...]}`)
+- `{"date": {"startDate": "...", "endDate": "...", "dateFilterType": "..."}}` (NOT `{"dateFrom": "...", "dateTo": "..."}`)
+
+### When Troubleshooting API Issues
+
+1. **First:** Check the API Info endpoint:
+   ```
+   GET https://api.artdatabanken.se/species-observation-system/v1/api/ApiInfo
+   ```
+   This provides version, documentation links, and status.
+
+2. **Second:** Consult GitHub documentation:
+   - Repository: https://github.com/biodiversitydata-se/SOS
+   - Search Filters: `/Docs/SearchFilter.md` (CRITICAL for request format)
+   - Endpoints: `/Docs/Endpoints.md`
+   - Changelog: `/CHANGELOG.md`
+
+3. **Third:** Test request format directly before modifying code:
+   ```python
+   import httpx
+   payload = {
+       "taxon": {"ids": [100012]},  # Nested!
+       "date": {"startDate": "2025-11-01", "endDate": "2025-11-02", "dateFilterType": "OverlappingStartDateAndEndDate"}  # Nested!
+   }
+   ```
+
+### Documentation Files
+
+- `docs/API_TROUBLESHOOTING.md` - Complete troubleshooting guide
+- `docs/API_CHANGES_LOG.md` - History of API-related changes
+- `src/api/artportalen_client.py` - Implementation (see comments for format notes)
+
+### Key Configuration
+
+- API Base URL: `https://api.artdatabanken.se/species-observation-system/v1`
+- Birds Taxon ID: `100012`
+- Default Date Filter Type: `"OverlappingStartDateAndEndDate"`
+
+### Testing Requirements
+
+When modifying API integration:
+- Always test with current date ranges
+- Verify date filtering works server-side
+- Check that nested object format is used
+- Test in browser (mandatory for web features)
+
