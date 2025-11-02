@@ -9,7 +9,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.api_client import GBIFAPIClient
+from src.api.gbif_client import GBIFAPIClient
 from src.config import Config
 
 
@@ -23,7 +23,7 @@ class TestDateRangeFiltering:
             dataset_key=Config.DATASET_KEY
         )
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_date_range_filtering(self, mock_client_class):
         """Test that date range is correctly formatted in API request."""
         # Setup mock response
@@ -63,7 +63,7 @@ class TestDateRangeFiltering:
         assert 'eventDate' in params
         assert params['eventDate'] == "2024-10-30,2024-10-31"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_single_date_filtering(self, mock_client_class):
         """Test that single date is correctly formatted."""
         mock_response = Mock()
@@ -89,7 +89,7 @@ class TestDateRangeFiltering:
         assert 'eventDate' in params
         assert params['eventDate'] == "2024-10-31,2024-10-31"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_default_date_range_yesterday_today(self, mock_client_class):
         """Test that default date range uses yesterday and today."""
         mock_response = Mock()
@@ -125,7 +125,7 @@ class TestDateRangeFiltering:
         
         assert (end_date_obj - start_date_obj).days == 1  # Exactly 1 day difference
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_date_range_with_multiple_days(self, mock_client_class):
         """Test date range spanning multiple days."""
         mock_response = Mock()
@@ -152,7 +152,7 @@ class TestDateRangeFiltering:
         params = call_args.kwargs['params']
         assert params['eventDate'] == "2024-10-01,2024-10-07"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_date_range_crosses_month_boundary(self, mock_client_class):
         """Test date range that crosses month boundary."""
         mock_response = Mock()
@@ -190,7 +190,7 @@ class TestLocationFiltering:
             dataset_key=Config.DATASET_KEY
         )
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_state_province_filtering(self, mock_client_class):
         """Test that state/province filter is included in API request."""
         mock_response = Mock()
@@ -216,7 +216,7 @@ class TestLocationFiltering:
         assert 'stateProvince' in params
         assert params['stateProvince'] == "Skåne"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_locality_filtering(self, mock_client_class):
         """Test that locality filter is included in API request."""
         mock_response = Mock()
@@ -242,7 +242,7 @@ class TestLocationFiltering:
         assert 'locality' in params
         assert params['locality'] == "Stockholm"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_combined_location_filters(self, mock_client_class):
         """Test combining state/province and locality filters."""
         mock_response = Mock()
@@ -271,7 +271,7 @@ class TestLocationFiltering:
         assert params['stateProvince'] == "Stockholm"
         assert params['locality'] == "Södermalm"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_no_location_filters_when_none_provided(self, mock_client_class):
         """Test that location parameters are not included when None."""
         mock_response = Mock()
@@ -309,7 +309,7 @@ class TestCombinedFilters:
             dataset_key=Config.DATASET_KEY
         )
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_date_and_location_filters_together(self, mock_client_class):
         """Test that date and location filters work together."""
         mock_response = Mock()
@@ -342,7 +342,7 @@ class TestCombinedFilters:
         assert params['stateProvince'] == "Skåne"
         assert params['locality'] == "Malmö"
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_response_structure_handling(self, mock_client_class):
         """Test that API response structure is handled correctly."""
         # Test with proper GBIF response structure
@@ -377,7 +377,7 @@ class TestCombinedFilters:
         assert result['count'] == 1
         assert len(result['results']) == 1
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_response_with_missing_fields(self, mock_client_class):
         """Test handling of API response with missing fields."""
         mock_response = Mock()
@@ -405,7 +405,7 @@ class TestCombinedFilters:
         assert 'count' in result
         assert result['count'] == 0
 
-    @patch('src.api_client.httpx.Client')
+    @patch('src.api.gbif_client.httpx.Client')
     def test_error_handling(self, mock_client_class):
         """Test error handling in API calls."""
         mock_client = Mock()

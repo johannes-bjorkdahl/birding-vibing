@@ -1,4 +1,28 @@
 """Configuration management for the application."""
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+# Try multiple locations: current directory, project root, and parent directories
+config_file = Path(__file__).resolve()
+project_root = config_file.parent.parent
+worktree_root = Path.cwd()
+
+# Try loading .env from multiple locations (order matters - later loads override earlier)
+env_paths = [
+    worktree_root / '.env',  # Current working directory (most common)
+    project_root / '.env',   # Project root (where .env should be)
+    Path('/workspaces/birding-vibing/.env'),  # Original workspace location
+]
+
+for env_path in env_paths:
+    if env_path.exists():
+        load_dotenv(env_path, override=False)  # Don't override if already loaded
+        break
+else:
+    # Fallback: try default behavior (searches upward from current dir)
+    load_dotenv()
 
 
 class Config:
@@ -15,3 +39,22 @@ class Config:
 
     # Country code for Sweden
     COUNTRY_CODE = "SE"
+
+    # Artportalen API configuration
+    # Base URL for Artportalen API (from api-portal.artdatabanken.se)
+    ARTPORTALEN_API_BASE_URL = os.getenv(
+        "ARTPORTALEN_API_BASE_URL",
+        "https://api.artdatabanken.se/species-observation-system/v1"
+    )
+
+    # Artportalen API key (optional - app falls back to GBIF if not set)
+    ARTPORTALEN_API_KEY = os.getenv("ARTPORTALEN_SLU_API_KEY")
+
+    # Date threshold for API selection (days)
+    # Recent dates (within this threshold) will use Artportalen API
+    # Historical dates (older) will use GBIF API
+    ARTPORTALEN_DATE_THRESHOLD_DAYS = int(os.getenv("ARTPORTALEN_DATE_THRESHOLD_DAYS", "7"))
+
+    # Artportalen taxon ID for birds (different from GBIF taxon key)
+    # This is the taxon ID used in Artportalen's system
+    ARTPORTALEN_BIRDS_TAXON_ID = int(os.getenv("ARTPORTALEN_BIRDS_TAXON_ID", "100012"))
