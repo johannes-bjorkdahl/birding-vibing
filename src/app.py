@@ -146,10 +146,17 @@ def create_clustered_map(df: pd.DataFrame) -> folium.Map:
     center_lat = map_data['latitude'].mean()
     center_lon = map_data['longitude'].mean()
 
-    # Create map centered on observations
+    # Calculate bounds from observation coordinates
+    min_lat = map_data['latitude'].min()
+    max_lat = map_data['latitude'].max()
+    min_lon = map_data['longitude'].min()
+    max_lon = map_data['longitude'].max()
+
+    # Create map centered on observations with a reasonable default zoom
+    # The fit_bounds will adjust this automatically
     m = folium.Map(
         location=[center_lat, center_lon],
-        zoom_start=6,
+        zoom_start=11,  # Default zoom for city areas (will be adjusted by fit_bounds)
         tiles='OpenStreetMap'
     )
 
@@ -188,6 +195,25 @@ def create_clustered_map(df: pd.DataFrame) -> folium.Map:
             popup=folium.Popup(popup_text, max_width=300),
             icon=folium.Icon(color='blue', icon='info-sign')
         ).add_to(marker_cluster)
+
+    # Calculate bounds and fit map to show all markers
+    # Check if we have valid bounds (points are not all identical)
+    lat_range = max_lat - min_lat
+    lon_range = max_lon - min_lon
+    
+    # If points are very close together (less than 0.001 degrees ~ 111 meters),
+    # use a default zoom level instead of fit_bounds
+    if lat_range < 0.001 and lon_range < 0.001:
+        # Single point or very tight cluster - use default zoom level
+        m.location = [center_lat, center_lon]
+        m.zoom_start = 12  # Zoom level for viewing a single location
+    else:
+        # Multiple points with spread - fit bounds to show all markers
+        # Padding in pixels: (top/bottom, left/right)
+        m.fit_bounds(
+            [[min_lat, min_lon], [max_lat, max_lon]],
+            padding=(20, 20)
+        )
 
     # Add layer control
     folium.LayerControl().add_to(m)
