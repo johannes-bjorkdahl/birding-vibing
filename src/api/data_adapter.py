@@ -115,13 +115,43 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
         elif "province" in location:
             normalized["stateProvince"] = location["province"]
 
-        # Locality - Artportalen uses municipality.name
+        # Locality/Site Name - Artportalen API NOTE:
+        # The Artportalen API does NOT return specific location names like "Vrångö" or "Stensjön"
+        # It only returns municipality.name and county.name
+        # Reverse geocoding is done lazily when formatting tooltips (not during normalization)
+        # to avoid blocking initial data load
+        
+        location_name = None
+        
+        # Check for any location name fields in API response (unlikely but possible)
+        if "site" in location:
+            site_obj = location["site"]
+            if isinstance(site_obj, dict):
+                location_name = (site_obj.get("name") or 
+                               site_obj.get("locationName") or 
+                               site_obj.get("siteName") or
+                               site_obj.get("locality"))
+            elif isinstance(site_obj, str):
+                location_name = site_obj
+        
+        if not location_name:
+            location_name = (location.get("locationName") or 
+                           location.get("siteName") or 
+                           location.get("name") or
+                           location.get("locality"))
+        
+        # If locality is a dict, extract name from it
+        if not location_name and "locality" in location:
+            if isinstance(location["locality"], dict):
+                location_name = location["locality"].get("name")
+        
+        # Use municipality name as default locality (reverse geocoding happens lazily in tooltip)
         if "municipality" in location and isinstance(location["municipality"], dict):
-            normalized["locality"] = location["municipality"].get("name")
-        elif "locality" in location:
-            normalized["locality"] = location["locality"]
-        elif "name" in location:
-            normalized["locality"] = location["name"]
+            municipality_name = location["municipality"].get("name")
+            if municipality_name:
+                normalized["municipality"] = municipality_name
+                # Set locality to municipality (will be replaced by reverse geocoding if available)
+                normalized["locality"] = location_name or municipality_name
 
         # Coordinate uncertainty
         if "coordinateUncertaintyInMeters" in location:
@@ -191,17 +221,35 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
 
     # ===== OBSERVER/RECORDER =====
     # Check various possible locations for observer info
+    # Artportalen might have observer in different places
+    observer_name = None
+    
+    # Check top-level fields first
     if "recordedBy" in record:
-        normalized["recordedBy"] = record["recordedBy"]
+        observer_name = record["recordedBy"]
     elif "observer" in record:
-        normalized["recordedBy"] = record["observer"]
+        observer_name = record["observer"]
     elif "recorder" in record:
-        normalized["recordedBy"] = record["recorder"]
+        observer_name = record["recorder"]
     elif "reportedBy" in record:
-        normalized["recordedBy"] = record["reportedBy"]
-    elif "location" in record and isinstance(record["location"], dict):
-        if "recordedBy" in record["location"]:
-            normalized["recordedBy"] = record["location"]["recordedBy"]
+        observer_name = record["reportedBy"]
+    
+    # Check nested structures
+    if not observer_name:
+        # Check in event object
+        if "event" in record and isinstance(record["event"], dict):
+            observer_name = record["event"].get("recordedBy") or record["event"].get("observer")
+        
+        # Check in location object
+        if not observer_name and "location" in record and isinstance(record["location"], dict):
+            observer_name = record["location"].get("recordedBy") or record["location"].get("observer")
+        
+        # Check in occurrence object
+        if not observer_name and "occurrence" in record and isinstance(record["occurrence"], dict):
+            observer_name = record["occurrence"].get("recordedBy") or record["occurrence"].get("observer")
+    
+    if observer_name:
+        normalized["recordedBy"] = observer_name
 
     # ===== BASIS OF RECORD =====
     if "basisOfRecord" in record:

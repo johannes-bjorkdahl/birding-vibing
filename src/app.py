@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta, date
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Callable
 import sys
 from pathlib import Path
 import folium
@@ -10,6 +10,7 @@ from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 import logging
 import traceback
+import time
 
 # Set up logging to stderr so errors appear in terminal
 logging.basicConfig(
@@ -76,6 +77,104 @@ def init_session_state():
         st.session_state.selected_location_id = "goteborgsomradet"  # Default to Göteborgsområdet
 
 
+def format_date_range_with_weekday(start_date: date, end_date: date) -> str:
+    """Format date range with weekday in European style.
+    
+    Args:
+        start_date: Start date
+        end_date: End date
+        
+    Returns:
+        Formatted string like "Sun 2 Nov 2025 - Mon 3 Nov 2025"
+    """
+    start_str = start_date.strftime("%a %d %b %Y")
+    end_str = end_date.strftime("%a %d %b %Y")
+    return f"{start_str} - {end_str}"
+
+
+def display_loading_progress(api_call_func: Callable, messages: List[str] = None) -> Any:
+    """Display animated loading progress bar with rotating messages.
+    
+    Uses continuous incremental updates for smooth progress animation.
+    
+    Args:
+        api_call_func: Function that performs the API call
+        messages: List of messages to display during loading
+        
+    Returns:
+        Result from api_call_func
+    """
+    if messages is None:
+        messages = [
+            "Finding birds...",
+            "Birding your location...",
+            "Scanning the skies...",
+            "Collecting observations...",
+            "Almost there...",
+            "Finalizing results..."
+        ]
+    
+    progress_placeholder = st.empty()
+    message_placeholder = st.empty()
+    
+    # Create progress bar and initial message
+    progress_bar = progress_placeholder.progress(0)
+    message_placeholder.text(messages[0])
+    
+    result = None
+    current_progress = 0.0
+    
+    def update_message(progress_val):
+        """Update message based on progress value."""
+        if progress_val < 0.15:
+            return messages[0]
+        elif progress_val < 0.3:
+            return messages[1]
+        elif progress_val < 0.5:
+            return messages[2]
+        elif progress_val < 0.7:
+            return messages[3]
+        elif progress_val < 0.9:
+            return messages[4]
+        else:
+            return messages[5]
+    
+    try:
+        # Smooth progress before API call - advance to 70% smoothly
+        for i in range(1, 71):  # Progress from 0% to 70% in 70 steps
+            current_progress = i / 100.0
+            progress_bar.progress(current_progress)
+            message_placeholder.text(update_message(current_progress))
+            time.sleep(0.04)  # Small delay for smooth animation (about 2.8 seconds total)
+        
+        # Execute API call (progress will pause here, but that's unavoidable)
+        result = api_call_func()
+        
+        # Smooth progress after API call (70% to 100%)
+        for i in range(71, 101):  # Progress from 70% to 100% in 30 steps
+            current_progress = i / 100.0
+            progress_bar.progress(current_progress)
+            message_placeholder.text(update_message(current_progress))
+            time.sleep(0.04)  # Consistent delay for smooth completion
+        
+        # Final state
+        progress_bar.progress(1.0)
+        message_placeholder.text(messages[5])
+        time.sleep(0.1)
+        
+    except Exception as e:
+        # Clear on error
+        progress_placeholder.empty()
+        message_placeholder.empty()
+        raise
+    finally:
+        # Clear progress indicators
+        progress_placeholder.empty()
+        message_placeholder.empty()
+    
+    return result
+
+
 def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """Format a single observation record for display."""
     # Handle Individual Count - convert to numeric or pd.NA
@@ -105,6 +204,7 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         'Scientific Name': record.get('species', record.get('scientificName', 'N/A')),
         'Common Name': record.get('vernacularName', 'N/A'),
         'Locality': record.get('locality', 'N/A'),
+        'Municipality': record.get('municipality', 'N/A'),  # Add municipality for tooltip optimization
         'State/Province': record.get('stateProvince', 'N/A'),
         'Country': record.get('countryCode', 'N/A'),
         'Observer': record.get('recordedBy', 'N/A'),
@@ -121,6 +221,152 @@ def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
         formatted['longitude'] = lon
 
     return formatted
+
+
+def format_popup_text(row: pd.Series, df: pd.DataFrame, idx: int) -> str:
+    """Format popup text in Glutt style for map markers.
+    
+    Format:
+    **Common Name** *Scientific Name*
+    
+    Count ex | Location, Municipality, County
+    Observer | Date Time
+    
+    Args:
+        row: Row from map_data DataFrame (with lat/lon)
+        df: Full DataFrame with all observation data
+        idx: Index of the row in the full DataFrame
+        
+    Returns:
+        HTML formatted popup text
+    """
+    parts = []
+    
+    # Species name line: Common Name (bold) + Scientific Name (italic, gray)
+    common_name = df.loc[idx, 'Common Name'] if 'Common Name' in df.columns else None
+    scientific_name = df.loc[idx, 'Scientific Name'] if 'Scientific Name' in df.columns else None
+    
+    # Capitalize common name (first letter uppercase)
+    if common_name and pd.notna(common_name) and common_name != 'N/A':
+        common_name_str = str(common_name)
+        # Capitalize first letter while preserving the rest
+        if common_name_str:
+            common_name_str = common_name_str[0].upper() + common_name_str[1:] if len(common_name_str) > 1 else common_name_str.upper()
+        species_line = f"<b>{common_name_str}</b>"
+        if scientific_name and pd.notna(scientific_name) and scientific_name != 'N/A':
+            species_line += f' <i style="color: #888;">{scientific_name}</i>'
+        parts.append(species_line)
+    elif scientific_name and pd.notna(scientific_name) and scientific_name != 'N/A':
+        parts.append(f"<b>{scientific_name}</b>")
+    
+    # Add blank line
+    parts.append("")
+    
+    # Count and location line
+    count_line_parts = []
+    
+    # Individual count
+    individual_count = df.loc[idx, 'Individual Count'] if 'Individual Count' in df.columns else None
+    if individual_count is not None and pd.notna(individual_count):
+        count_line_parts.append(f"{int(individual_count)} ex")
+    # Don't add "ex" if no count available
+    
+    # Location parts - show specific location name if available
+    location_parts = []
+    
+    # Locality (specific place name like "Vrångö")
+    locality = df.loc[idx, 'Locality'] if 'Locality' in df.columns else None
+    
+    # Only do lazy reverse geocoding if locality is same as municipality (meaning we didn't get a specific name)
+    # This avoids unnecessary API calls for locations that already have specific names
+    if locality and pd.notna(locality) and locality != 'N/A':
+        # Check if municipality column exists and if locality equals municipality
+        municipality = df.loc[idx, 'Municipality'] if 'Municipality' in df.columns else None
+        if not municipality or str(municipality) == str(locality):
+            # Locality is same as municipality - try to get more specific location name
+            lat = row.get('latitude') or (df.loc[idx, 'latitude'] if 'latitude' in df.columns else None)
+            lon = row.get('longitude') or (df.loc[idx, 'longitude'] if 'longitude' in df.columns else None)
+            
+            # Only do reverse geocoding if we have coordinates
+            if lat is not None and lon is not None:
+                from src.api.reverse_geocode import get_location_name
+                specific_location = get_location_name(lat, lon)
+                if specific_location and specific_location != locality:
+                    # Found a more specific location name
+                    locality = specific_location
+        
+        locality_str = str(locality).strip()
+        # Only add if it's not empty and not just whitespace
+        if locality_str:
+            location_parts.append(locality_str)
+    
+    # State/Province (County) - only add if we have a specific locality
+    # If locality is missing or same as state/province, don't duplicate
+    state_province = df.loc[idx, 'State/Province'] if 'State/Province' in df.columns else None
+    if state_province and pd.notna(state_province) and state_province != 'N/A':
+        state_province_str = str(state_province).strip()
+        # Only add county if we have a locality and they're different
+        if state_province_str and state_province_str != locality:
+            location_parts.append(state_province_str)
+    
+    location_str = ", ".join(location_parts) if location_parts else ""
+    
+    if count_line_parts:
+        if location_str:
+            count_line_parts.append(location_str)  # Don't add pipe here, join handles it
+        parts.append(" | ".join(count_line_parts))
+    elif location_str:
+        parts.append(location_str)
+    
+    # Observer and date/time line
+    info_line_parts = []
+    
+    # Observer
+    observer = df.loc[idx, 'Observer'] if 'Observer' in df.columns else None
+    if observer and pd.notna(observer) and observer != 'N/A':
+        info_line_parts.append(str(observer))
+    
+    # Date and time
+    date_str = None
+    time_str = None
+    
+    # Get date from Date column
+    date_field = df.loc[idx, 'Date'] if 'Date' in df.columns else None
+    if date_field and pd.notna(date_field) and date_field != 'N/A':
+        date_str = str(date_field)
+        
+        # Try to parse date and extract time if available
+        try:
+            # Check if date_string contains time (ISO format like "2025-11-02T07:41:00")
+            if 'T' in date_str:
+                date_part, time_part = date_str.split('T')
+                # Parse date
+                parsed_date = datetime.strptime(date_part, "%Y-%m-%d")
+                # Format date as "Mon 2 Nov 2025"
+                date_str = parsed_date.strftime("%a %d %b %Y")
+                # Extract time (HH:MM)
+                time_part = time_part.split(':')[:2]
+                if len(time_part) >= 2:
+                    time_str = f"{time_part[0]}:{time_part[1]}"
+            else:
+                # Just date, format it
+                parsed_date = datetime.strptime(date_str.split()[0], "%Y-%m-%d")
+                date_str = parsed_date.strftime("%a %d %b %Y")
+        except (ValueError, AttributeError, IndexError):
+            # If parsing fails, use original string
+            pass
+    
+    if date_str or time_str:
+        datetime_str = date_str
+        if time_str:
+            datetime_str += f" {time_str}"
+        info_line_parts.append(datetime_str)
+    
+    if info_line_parts:
+        parts.append(" | ".join(info_line_parts))
+    
+    # Join all parts with <br> tags
+    return "<br>".join(parts) if parts else "Observation"
 
 
 def create_clustered_map(df: pd.DataFrame) -> folium.Map:
@@ -170,24 +416,8 @@ def create_clustered_map(df: pd.DataFrame) -> folium.Map:
 
     # Add markers to cluster
     for idx, row in map_data.iterrows():
-        # Get additional information for popup if available
-        popup_text = f"Observation at ({row['latitude']:.4f}, {row['longitude']:.4f})"
-
-        # Try to add species information if available in the dataframe
-        if 'Scientific Name' in df.columns:
-            species_name = df.loc[idx, 'Scientific Name']
-            if pd.notna(species_name):
-                popup_text = f"<b>{species_name}</b><br>" + popup_text
-
-        if 'Common Name' in df.columns:
-            common_name = df.loc[idx, 'Common Name']
-            if pd.notna(common_name) and common_name != 'N/A':
-                popup_text = popup_text.replace('<br>', f" ({common_name})<br>")
-
-        if 'Date' in df.columns:
-            obs_date = df.loc[idx, 'Date']
-            if pd.notna(obs_date):
-                popup_text += f"<br>Date: {obs_date}"
+        # Format popup text in Glutt style
+        popup_text = format_popup_text(row, df, idx)
 
         # Add marker to cluster
         folium.Marker(
@@ -475,17 +705,6 @@ def search_observations(search_params: Dict[str, Any]):
             st.error(f"Invalid location ID: {location_id}")
             return
         
-        # Determine which API will be used for the spinner message
-        api_info = st.session_state.unified_client.get_current_api_info()
-        use_artportalen, reason = st.session_state.unified_client._should_use_artportalen(
-            start_date, end_date, api_selection
-        )
-        
-        if use_artportalen:
-            spinner_msg = "Searching Artportalen API for real-time bird observations..."
-        else:
-            spinner_msg = "Searching GBIF API for bird observations from Artportalen..."
-        
         # Handle special areas (multiple municipalities)
         if is_special_area(location_id):
             # For special areas, make multiple API calls and combine results
@@ -493,12 +712,13 @@ def search_observations(search_params: Dict[str, Any]):
             max_results_per_municipality = search_params['max_results'] // len(municipalities) if municipalities else search_params['max_results']
             max_results_per_municipality = max(max_results_per_municipality, 10)  # At least 10 per municipality
             
-            all_results_lists = []
-            all_errors = []
-            api_source_info = 'gbif'
-            api_reason_info = 'unknown'
-            
-            with st.spinner(f"{spinner_msg} ({len(municipalities)} areas)..."):
+            def search_special_area():
+                """Wrapper function for special area search."""
+                all_results_lists = []
+                all_errors = []
+                api_source_info = 'gbif'
+                api_reason_info = 'unknown'
+                
                 for municipality in municipalities:
                     # Create a temporary location object for this municipality
                     temp_location = Location(
@@ -525,32 +745,41 @@ def search_observations(search_params: Dict[str, Any]):
                             api_source_info = single_result.get('_api_source', 'gbif')
                             api_reason_info = single_result.get('_api_selection_reason', 'unknown')
                         all_results_lists.append(single_result.get('results', []))
+                
+                # Combine and deduplicate results
+                combined_results = _deduplicate_results(all_results_lists)
+                combined_results = combined_results[:search_params['max_results']]  # Limit to max_results
+                
+                # Create combined result structure
+                result_dict = {
+                    'results': combined_results,
+                    'count': len(combined_results),
+                    '_api_source': api_source_info,
+                    '_api_selection_reason': api_reason_info,
+                    '_all_errors': all_errors
+                }
+                return result_dict
             
-            # Combine and deduplicate results
-            combined_results = _deduplicate_results(all_results_lists)
-            combined_results = combined_results[:search_params['max_results']]  # Limit to max_results
-            
-            # Create combined result structure
-            result = {
-                'results': combined_results,
-                'count': len(combined_results),
-                '_api_source': api_source_info,
-                '_api_selection_reason': api_reason_info
-            }
+            # Use loading progress bar for special area search
+            result = display_loading_progress(search_special_area)
             
             # Show errors if any
-            if all_errors:
-                st.warning(f"Some areas had errors: {'; '.join(all_errors)}")
+            if result.get('_all_errors'):
+                st.warning(f"Some areas had errors: {'; '.join(result['_all_errors'])}")
         else:
             # Single location search
-            with st.spinner(spinner_msg):
-                result = _search_single_location(
+            def search_single():
+                """Wrapper function for single location search."""
+                return _search_single_location(
                     location,
                     start_date,
                     end_date,
                     search_params['max_results'],
                     api_selection
                 )
+            
+            # Use loading progress bar for single location search
+            result = display_loading_progress(search_single)
 
         if 'error' in result:
             api_source = result.get('_api_source', 'unknown')
@@ -581,21 +810,6 @@ def search_observations(search_params: Dict[str, Any]):
         api_source = result.get('_api_source', 'gbif')
         api_reason = result.get('_api_selection_reason', 'unknown')
         artportalen_error = result.get('_artportalen_error')
-        
-        # Show API source info
-        if api_source == 'artportalen':
-            st.success("✅ Using Artportalen API (Real-time data)")
-        else:
-            if api_reason == 'artportalen_unavailable':
-                st.info("ℹ️ Artportalen API not configured - using GBIF API (Weekly updates)")
-            elif api_reason == 'historical_date_range':
-                st.info("ℹ️ Historical date range - using GBIF API (Weekly updates)")
-            elif artportalen_error:
-                # Show warning if Artportalen failed and we fell back
-                st.warning(f"⚠️ Artportalen API failed ({artportalen_error}) - using GBIF API (Weekly updates)")
-            else:
-                st.info("ℹ️ Using GBIF API (Weekly updates)")
-        
         # If no results but no error, check if we're querying future dates or very recent dates
         if not results and count == 0:
             today = datetime.now().date()
@@ -679,9 +893,6 @@ def display_observations():
 
     data = st.session_state.observations_data
 
-    # Display summary
-    st.header("Search Results")
-
     # Check for results
     results = data.get('results', [])
     total_count = data.get('count', 0)
@@ -691,32 +902,44 @@ def display_observations():
         st.warning("No observations found for the given search criteria. Try adjusting your filters.")
         return
 
-    # Show data source badge
-    if api_source == 'artportalen':
-        st.success("📡 **Data Source:** Artportalen API (Real-time observations)")
-    else:
-        st.info("📚 **Data Source:** GBIF API (Weekly updates from Artportalen)")
-
-    # Summary metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Results Shown", len(results))
-    with col2:
-        st.metric("Total Available", f"{total_count:,}")
-    with col3:
-        # Count unique species
-        species = set()
-        for record in results:
-            species_name = record.get('species') or record.get('scientificName')
-            if species_name:
-                species.add(species_name)
-        st.metric("Unique Species", len(species))
-    with col4:
-        # Get year range from results
-        years = [r.get('year') for r in results if r.get('year')]
-        if years:
-            year_range = f"{min(years)}-{max(years)}"
-            st.metric("Year Range", year_range)
+    # Compact header section - all metrics in one row
+    # Get date range from session state
+    start_date = st.session_state.get('start_date')
+    end_date = st.session_state.get('end_date')
+    date_range_str = "N/A"
+    if start_date and end_date:
+        date_range_str = format_date_range_with_weekday(start_date, end_date)
+    
+    # Count unique species
+    species = set()
+    for record in results:
+        species_name = record.get('species') or record.get('scientificName')
+        if species_name:
+            species.add(species_name)
+    
+    # Compact header with title, metrics and data source
+    st.title("🐦 Johannes Birding Data Vibes")
+    
+    header_col1, header_col2, header_col3, header_col4, header_col5 = st.columns([1.5, 1, 1, 1, 1.5])
+    
+    with header_col1:
+        if api_source == 'artportalen':
+            st.markdown("📡 **Artportalen** (Real-time)")
+        else:
+            st.markdown("📚 **GBIF** (Weekly updates)")
+    
+    with header_col2:
+        st.metric("Results", len(results), help="Number of observations displayed")
+    
+    with header_col3:
+        st.metric("Total", f"{total_count:,}", help="Total observations available")
+    
+    with header_col4:
+        st.metric("Species", len(species), help="Unique species found")
+    
+    with header_col5:
+        st.caption("**Date Range**")
+        st.markdown(f"<small>{date_range_str}</small>", unsafe_allow_html=True)
 
     # Format records for display
     formatted_records = [format_observation_record(record) for record in results]
@@ -730,26 +953,16 @@ def display_observations():
 
         # Display map if coordinates are available (before table)
         if 'latitude' in df.columns and 'longitude' in df.columns:
-            st.subheader("Observation Locations")
-
             # Create clustered map
             clustered_map = create_clustered_map(df)
 
             if clustered_map is not None:
-                # Display the map with clustering
+                # Display the map with clustering - larger and more square
                 st_folium(
                     clustered_map,
                     width=None,  # Use full container width
-                    height=600,
+                    height=850,  # Increased height for more square aspect ratio
                     returned_objects=[]  # Don't track user interactions
-                )
-
-                # Add info about clustering
-                st.info(
-                    "🗺️ **Interactive Map with Clustering**: "
-                    "Nearby observations are automatically grouped together. "
-                    "Click on cluster circles to zoom in and see individual observations. "
-                    "Click on markers to see observation details."
                 )
             else:
                 st.info("No coordinate data available for mapping.")
@@ -792,7 +1005,7 @@ def display_observations():
 def main():
     """Main application function."""
     st.set_page_config(
-        page_title="Swedish Bird Observations",
+        page_title="Johannes Birding Data Vibes",
         page_icon="🐦",
         layout="wide",
         initial_sidebar_state="expanded"
@@ -800,13 +1013,6 @@ def main():
 
     # Initialize session state
     init_session_state()
-
-    # Header
-    st.title("🐦 Swedish Bird Observations")
-    st.markdown(
-        "Explore bird observations from **Artportalen** (Swedish Species Observation System) "
-        "with **dual API support**: Real-time data via Artportalen API or historical data via GBIF API."
-    )
 
     # About section
     display_about_section()
