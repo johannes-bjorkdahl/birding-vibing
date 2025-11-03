@@ -74,7 +74,7 @@ class ArtportalenAPIClient:
         """
         if not self._is_authenticated():
             return {
-                "error": "Artportalen API key not configured. Please set ARTPORTALEN_SLU_API_KEY in .env file.",
+                "error": "Artportalen API key not configured. Please set ARTPORTALEN_SLU_API_KEY in .streamlit/secrets.toml file (recommended) or as an environment variable.",
                 "results": [],
                 "count": 0
             }
