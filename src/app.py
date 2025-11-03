@@ -26,6 +26,14 @@ from src.config import Config
 from src.api.gbif_client import GBIFAPIClient
 from src.api.artportalen_client import ArtportalenAPIClient
 from src.api.unified_client import UnifiedAPIClient
+from src.locations import (
+    get_all_locations,
+    get_location_by_id,
+    is_special_area,
+    get_location_display_name,
+    Location,
+    LocationType
+)
 
 
 def init_session_state():
@@ -63,6 +71,9 @@ def init_session_state():
     
     if 'auto_fetched' not in st.session_state:
         st.session_state.auto_fetched = False
+    
+    if 'selected_location_id' not in st.session_state:
+        st.session_state.selected_location_id = "goteborgsomradet"  # Default to Göteborgsområdet
 
 
 def format_observation_record(record: Dict[str, Any]) -> Dict[str, Any]:
@@ -313,24 +324,115 @@ def display_search_filters():
 
     # Location filters
     st.sidebar.subheader("Location Filter")
-    province = st.sidebar.text_input(
-        "State/Province (optional)",
-        help="Enter Swedish county/province name (e.g., 'Skåne', 'Stockholm')"
+    
+    # Get all available locations
+    all_locations = get_all_locations()
+    location_options = [loc.id for loc in all_locations]
+    
+    # Find default index (should be göteborgsområdet)
+    default_location_id = st.session_state.selected_location_id
+    default_index = 0
+    if default_location_id in location_options:
+        default_index = location_options.index(default_location_id)
+    
+    # Create dropdown with format function
+    selected_location_id = st.sidebar.selectbox(
+        "Location",
+        options=location_options,
+        index=default_index,
+        format_func=lambda loc_id: get_location_display_name(loc_id),
+        help="Select a Swedish county, municipality, or special area"
     )
     
-    locality = st.sidebar.text_input(
-        "Locality (optional)",
-        help="Enter city/town name for more specific location filtering"
-    )
+    # Update session state
+    st.session_state.selected_location_id = selected_location_id
 
     return {
         'start_date': start_date,
         'end_date': end_date,
         'max_results': max_results,
-        'province': province if province else None,
-        'locality': locality if locality else None,
+        'location_id': selected_location_id,
         'api_selection': selected_api
     }
+
+
+def _search_single_location(
+    location: Location,
+    start_date: date,
+    end_date: date,
+    max_results: int,
+    api_selection: str
+) -> Dict[str, Any]:
+    """Search observations for a single location.
+    
+    Args:
+        location: Location object
+        start_date: Start date for search
+        end_date: End date for search
+        max_results: Maximum number of results
+        api_selection: API selection mode
+        
+    Returns:
+        Dict with search results
+    """
+    province = None
+    locality = None
+    
+    if location.type.value == "county":
+        province = location.name
+    elif location.type.value == "municipality":
+        province = location.province
+        locality = location.locality
+    # Special areas are handled separately
+    
+    return st.session_state.unified_client.search_occurrences(
+        taxon_key=Config.BIRDS_TAXON_KEY,
+        taxon_id=Config.ARTPORTALEN_BIRDS_TAXON_ID,
+        start_date=start_date,
+        end_date=end_date,
+        country=Config.COUNTRY_CODE,
+        limit=max_results,
+        state_province=province,
+        locality=locality,
+        force_api=api_selection
+    )
+
+
+def _deduplicate_results(results_list: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Deduplicate results from multiple API calls.
+    
+    Uses a combination of coordinates, date, and species name to identify duplicates.
+    
+    Args:
+        results_list: List of result lists from multiple API calls
+        
+    Returns:
+        Deduplicated list of results
+    """
+    seen = set()
+    deduplicated = []
+    
+    for results in results_list:
+        for record in results:
+            # Create a unique key from coordinates, date, and species
+            lat = record.get('latitude') or record.get('decimalLatitude')
+            lon = record.get('longitude') or record.get('decimalLongitude')
+            event_date = record.get('eventDate') or record.get('date')
+            species = record.get('species') or record.get('scientificName') or ''
+            
+            # If we have coordinates, use them for deduplication
+            if lat is not None and lon is not None:
+                # Round to 4 decimal places (~11 meters precision)
+                key = (round(float(lat), 4), round(float(lon), 4), str(event_date), str(species))
+            else:
+                # Fallback to date + species if no coordinates
+                key = (str(event_date), str(species))
+            
+            if key not in seen:
+                seen.add(key)
+                deduplicated.append(record)
+    
+    return deduplicated
 
 
 def search_observations(search_params: Dict[str, Any]):
@@ -339,6 +441,13 @@ def search_observations(search_params: Dict[str, Any]):
         start_date = search_params['start_date']
         end_date = search_params['end_date']
         api_selection = search_params.get('api_selection', 'auto')
+        location_id = search_params.get('location_id', 'goteborgsomradet')
+        
+        # Get location configuration
+        location = get_location_by_id(location_id)
+        if not location:
+            st.error(f"Invalid location ID: {location_id}")
+            return
         
         # Determine which API will be used for the spinner message
         api_info = st.session_state.unified_client.get_current_api_info()
@@ -351,19 +460,71 @@ def search_observations(search_params: Dict[str, Any]):
         else:
             spinner_msg = "Searching GBIF API for bird observations from Artportalen..."
         
-        with st.spinner(spinner_msg):
-            # Use unified client with forced API selection if specified
-            result = st.session_state.unified_client.search_occurrences(
-                taxon_key=Config.BIRDS_TAXON_KEY,
-                taxon_id=Config.ARTPORTALEN_BIRDS_TAXON_ID,
-                start_date=start_date,
-                end_date=end_date,
-                country=Config.COUNTRY_CODE,
-                limit=search_params['max_results'],
-                state_province=search_params['province'],
-                locality=search_params.get('locality'),
-                force_api=api_selection
-            )
+        # Handle special areas (multiple municipalities)
+        if is_special_area(location_id):
+            # For special areas, make multiple API calls and combine results
+            municipalities = location.municipalities or []
+            max_results_per_municipality = search_params['max_results'] // len(municipalities) if municipalities else search_params['max_results']
+            max_results_per_municipality = max(max_results_per_municipality, 10)  # At least 10 per municipality
+            
+            all_results_lists = []
+            all_errors = []
+            api_source_info = 'gbif'
+            api_reason_info = 'unknown'
+            
+            with st.spinner(f"{spinner_msg} ({len(municipalities)} areas)..."):
+                for municipality in municipalities:
+                    # Create a temporary location object for this municipality
+                    temp_location = Location(
+                        id=f"temp_{municipality}",
+                        name=municipality,
+                        type=LocationType.MUNICIPALITY,
+                        province=location.province,
+                        locality=municipality
+                    )
+                    
+                    single_result = _search_single_location(
+                        temp_location,
+                        start_date,
+                        end_date,
+                        max_results_per_municipality,
+                        api_selection
+                    )
+                    
+                    if 'error' in single_result:
+                        all_errors.append(f"{municipality}: {single_result['error']}")
+                    else:
+                        # Capture API source info from first successful result
+                        if len(all_results_lists) == 0 and '_api_source' in single_result:
+                            api_source_info = single_result.get('_api_source', 'gbif')
+                            api_reason_info = single_result.get('_api_selection_reason', 'unknown')
+                        all_results_lists.append(single_result.get('results', []))
+            
+            # Combine and deduplicate results
+            combined_results = _deduplicate_results(all_results_lists)
+            combined_results = combined_results[:search_params['max_results']]  # Limit to max_results
+            
+            # Create combined result structure
+            result = {
+                'results': combined_results,
+                'count': len(combined_results),
+                '_api_source': api_source_info,
+                '_api_selection_reason': api_reason_info
+            }
+            
+            # Show errors if any
+            if all_errors:
+                st.warning(f"Some areas had errors: {'; '.join(all_errors)}")
+        else:
+            # Single location search
+            with st.spinner(spinner_msg):
+                result = _search_single_location(
+                    location,
+                    start_date,
+                    end_date,
+                    search_params['max_results'],
+                    api_selection
+                )
 
         if 'error' in result:
             api_source = result.get('_api_source', 'unknown')
@@ -627,15 +788,15 @@ def main():
     # Search filters
     search_params = display_search_filters()
 
-    # Auto-fetch current day's observations on first page load
+    # Auto-fetch current day's observations on first page load with default location
     if not st.session_state.auto_fetched:
         today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
         auto_search_params = {
-            'start_date': today,
+            'start_date': yesterday,  # Include yesterday for more results
             'end_date': today,
             'max_results': search_params['max_results'],
-            'province': None,
-            'locality': None,
+            'location_id': search_params.get('location_id', 'goteborgsomradet'),
             'api_selection': search_params['api_selection']
         }
         search_observations(auto_search_params)

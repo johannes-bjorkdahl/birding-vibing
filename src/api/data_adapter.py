@@ -59,6 +59,8 @@ def normalize_artportalen_record(record: Dict[str, Any]) -> Dict[str, Any]:
     scientific_name = None
     if "taxon" in record and isinstance(record["taxon"], dict):
         scientific_name = record["taxon"].get("scientificName")
+        # Preserve full taxon object including attributes for bird filtering
+        normalized["_taxon"] = record["taxon"]
     elif "scientificName" in record:
         scientific_name = record["scientificName"]
     elif "scientificname" in record:

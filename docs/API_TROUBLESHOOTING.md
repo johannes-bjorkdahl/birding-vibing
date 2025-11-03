@@ -257,14 +257,67 @@ print(f'Results: {result.get(\"count\", 0)}')
 "
 ```
 
+### Location Filter Format (FIXED - November 2025)
+
+**❌ INCORRECT (Old Format):**
+```json
+{
+  "province": "Västra Götaland",
+  "locality": "Göteborg"
+}
+```
+
+**✅ CORRECT (Current Format):**
+```json
+{
+  "geographics": {
+    "areas": [
+      {
+        "areaType": "County",
+        "featureId": "14"
+      }
+    ]
+  }
+}
+```
+
+For municipalities:
+```json
+{
+  "geographics": {
+    "areas": [
+      {
+        "areaType": "Municipality",
+        "featureId": "1480"
+      }
+    ]
+  }
+}
+```
+
+**Key Points:**
+- Location filters MUST use nested `geographics` object with `areas` array
+- Each area requires `areaType` ("County" or "Municipality") and `featureId` (numeric ID as string)
+- Feature IDs are mapped from location names using static mappings in `src/locations.py`
+- Counties: Use `areaType: "County"` with county feature ID (e.g., "14" for Västra Götaland)
+- Municipalities: Use `areaType: "Municipality"` with municipality feature ID (e.g., "1480" for Göteborg)
+- Multiple areas can be included in the array for filtering across multiple locations
+
+**Feature ID Lookup:**
+- County feature IDs are mapped in `COUNTY_FEATURE_IDS` dictionary
+- Municipality feature IDs are mapped in `MUNICIPALITY_FEATURE_IDS` dictionary (partial mapping)
+- See `src/locations.py` for complete mappings and lookup functions
+- Full feature ID lists available in Areas.md documentation: https://github.com/biodiversitydata-se/SOS/blob/master/Docs/Areas.md
+
 ## Summary
 
 **Always remember:**
 1. The Artportalen API uses **nested objects** for filters, not flat parameters
 2. Date filters: `date: {startDate, endDate, dateFilterType}` (NOT `dateFrom`/`dateTo`)
 3. Taxon filters: `taxon: {ids: [...]}` (NOT `taxonIds`)
-4. Check GitHub documentation (`/Docs/SearchFilter.md`) for the latest format
-5. Use `ApiInfo` endpoint to verify API version and documentation links
+4. Location filters: `geographics: {areas: [{areaType, featureId}]}` (NOT `province`/`locality`)
+5. Check GitHub documentation (`/Docs/SearchFilter.md`) for the latest format
+6. Use `ApiInfo` endpoint to verify API version and documentation links
 
 **Current Working Format (as of November 2025):**
 ```json
@@ -276,6 +329,14 @@ print(f'Results: {result.get(\"count\", 0)}')
     "startDate": "2025-11-01",
     "endDate": "2025-11-02",
     "dateFilterType": "OverlappingStartDateAndEndDate"
+  },
+  "geographics": {
+    "areas": [
+      {
+        "areaType": "Municipality",
+        "featureId": "1480"
+      }
+    ]
   }
 }
 ```
