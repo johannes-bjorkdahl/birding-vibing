@@ -76,17 +76,25 @@ This application accesses the **Artportalen** dataset, Sweden's national species
 
 3. **Configure Artportalen API (Optional):**
    
-   For real-time data access, create a `.env` file in the project root:
+   For real-time data access, create a `.streamlit/secrets.toml` file in the project root:
    ```bash
-   ARTPORTALEN_SLU_API_KEY=your_api_key_here
+   mkdir -p .streamlit
+   ```
+   
+   Then create `.streamlit/secrets.toml` with your API key:
+   ```toml
+   ARTPORTALEN_SLU_API_KEY = "your_api_key_here"
    ```
    
    To obtain an API key:
    1. Register at [api-portal.artdatabanken.se](https://api-portal.artdatabanken.se/)
    2. Subscribe to the observation API product
-   3. Copy your API key to the `.env` file
+   3. Copy your API key to the `.streamlit/secrets.toml` file
    
-   **Note:** The application works without the Artportalen API key - it will automatically use GBIF API for all queries. Artportalen API is only needed for real-time recent observations.
+   **Note:** 
+   - The application works without the Artportalen API key - it will automatically use GBIF API for all queries. Artportalen API is only needed for real-time recent observations.
+   - Using `secrets.toml` is the recommended approach for Streamlit apps and simplifies deployment to Streamlit Community Cloud (you can paste the secrets directly in the deployment settings).
+   - For backward compatibility, the app also checks environment variables if `secrets.toml` is not available.
 
 ## Usage
 
@@ -148,7 +156,8 @@ birding-vibing/
 │       ├── artportalen_client.py  # Artportalen API client
 │       ├── unified_client.py     # Smart API router
 │       └── data_adapter.py   # Data normalization adapter
-├── .env                     # Environment variables (API keys) - not in git
+├── .streamlit/
+│   └── secrets.toml         # API keys (gitignored) - use secrets.toml.example as template
 ├── .gitignore               # Git ignore rules
 ├── pyproject.toml           # Project dependencies and metadata
 ├── run.sh                   # Convenience script to run the app
@@ -185,7 +194,7 @@ For real-time observations, the application can use the **Artportalen API**:
 **Setup:**
 1. Register at [api-portal.artdatabanken.se](https://api-portal.artdatabanken.se/)
 2. Subscribe to the observation API product
-3. Add API key to `.env` file as `ARTPORTALEN_SLU_API_KEY`
+3. Add API key to `.streamlit/secrets.toml` file as `ARTPORTALEN_SLU_API_KEY` (recommended) or as an environment variable for backward compatibility
 
 ### API Documentation:
 - [GBIF API Documentation](https://techdocs.gbif.org/en/openapi/)

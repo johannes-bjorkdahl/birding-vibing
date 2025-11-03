@@ -25,6 +25,43 @@ else:
     load_dotenv()
 
 
+def _get_api_key() -> str | None:
+    """
+    Get Artportalen API key from Streamlit secrets or environment variables.
+    
+    Priority order:
+    1. Streamlit secrets.toml (recommended for Streamlit apps)
+    2. Environment variables (for backward compatibility and non-Streamlit contexts)
+    
+    Returns:
+        API key string if found, None otherwise
+    """
+    # Try Streamlit secrets first (recommended approach)
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets'):
+            # Try to access the secret (handle both dict-like and attribute access)
+            try:
+                # Try dict-like access with .get() if available
+                if hasattr(st.secrets, 'get'):
+                    api_key = st.secrets.get("ARTPORTALEN_SLU_API_KEY")
+                else:
+                    # Fallback to direct access (may raise KeyError)
+                    api_key = st.secrets["ARTPORTALEN_SLU_API_KEY"]
+                
+                if api_key:
+                    return str(api_key)
+            except (KeyError, AttributeError):
+                # Key doesn't exist in secrets, fall through to env var
+                pass
+    except (ImportError, RuntimeError):
+        # Streamlit not available or not in Streamlit context (e.g., tests)
+        pass
+    
+    # Fallback to environment variable (backward compatibility)
+    return os.getenv("ARTPORTALEN_SLU_API_KEY")
+
+
 class Config:
     """Application configuration."""
 
@@ -48,7 +85,8 @@ class Config:
     )
 
     # Artportalen API key (optional - app falls back to GBIF if not set)
-    ARTPORTALEN_API_KEY = os.getenv("ARTPORTALEN_SLU_API_KEY")
+    # Loads from Streamlit secrets.toml first, then falls back to environment variables
+    ARTPORTALEN_API_KEY = _get_api_key()
 
     # Date threshold for API selection (days)
     # Recent dates (within this threshold) will use Artportalen API
