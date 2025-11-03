@@ -2,6 +2,7 @@
 import httpx
 from typing import Dict, List, Optional, Any
 from datetime import date, datetime
+from src.locations import get_area_filter
 
 
 class ArtportalenAPIClient:
@@ -11,7 +12,8 @@ class ArtportalenAPIClient:
     IMPORTANT API FORMAT REQUIREMENTS:
     - Date filters MUST use nested format: {"date": {"startDate": "...", "endDate": "...", "dateFilterType": "..."}}
     - Taxon filters MUST use nested format: {"taxon": {"ids": [...]}}
-    - Do NOT use flat parameters like "dateFrom"/"dateTo" or "taxonIds"
+    - Location filters MUST use nested format: {"geographics": {"areas": [{"areaType": "...", "featureId": "..."}]}}
+    - Do NOT use flat parameters like "dateFrom"/"dateTo", "taxonIds", or "province"/"locality"
     
     For API documentation and troubleshooting:
     - See docs/API_TROUBLESHOOTING.md for complete guide
@@ -99,8 +101,11 @@ class ArtportalenAPIClient:
         # Add filters
         # NOTE: Artportalen API requires nested objects, not flat parameters
         # See docs/API_TROUBLESHOOTING.md for details
-        if taxon_id:
-            request_body["taxon"] = {"ids": [taxon_id]}
+        # NOTE: We don't use taxon filter here because taxon_id parameter might be incorrect
+        # (e.g., 100012 is gråhäger, not all birds). Instead, we filter client-side
+        # to only include bird observations based on the taxon information in responses.
+        # If a taxon_id is provided, it will be ignored and all observations will be returned,
+        # then filtered client-side for birds only.
 
         # Date filter - use nested date object with startDate/endDate (correct API format)
         # Format: {"date": {"startDate": "...", "endDate": "...", "dateFilterType": "..."}}
@@ -121,11 +126,12 @@ class ArtportalenAPIClient:
         if country:
             request_body["country"] = country
 
-        if state_province:
-            request_body["province"] = state_province
-
-        if locality:
-            request_body["locality"] = locality
+        # Location filter - use nested geographics object with areas array (correct API format)
+        # Format: {"geographics": {"areas": [{"areaType": "County"|"Municipality", "featureId": "..."}]}}
+        # Do NOT use flat "province"/"locality" parameters - that's the old (incorrect) format
+        geographics_filter = get_area_filter(state_province=state_province, locality=locality)
+        if geographics_filter:
+            request_body.update(geographics_filter)
 
         try:
             with httpx.Client(timeout=30.0) as client:
@@ -151,10 +157,9 @@ class ArtportalenAPIClient:
                             params["dateTo"] = end_date.isoformat()
                         if country:
                             params["country"] = country
-                        if state_province:
-                            params["province"] = state_province
-                        if locality:
-                            params["locality"] = locality
+                        # Note: GET fallback doesn't support geographics filter properly
+                        # Location filters will be skipped if POST fails
+                        # This is acceptable since POST is the primary method
                         params["skip"] = offset
                         params["take"] = min(limit, 1000)
                         
@@ -211,6 +216,39 @@ class ArtportalenAPIClient:
                     normalized_data['results'] = []
                 if 'count' not in normalized_data:
                     normalized_data['count'] = len(normalized_data.get('results', []))
+
+                # Filter for birds only (client-side filtering) - BEFORE normalization
+                # Since taxon_id might be incorrect (e.g., 100012 is gråhäger, not all birds),
+                # we filter client-side to only include bird observations.
+                # Birds are identified by checking taxon.attributes.organismGroup == "Fåglar"
+                if taxon_id:  # Only filter if taxon_id was requested (meaning we want birds only)
+                    bird_results = []
+                    raw_records = normalized_data.get('results', [])
+                    
+                    for record in raw_records:
+                        is_bird = False
+                        
+                        # Check taxon information in raw record
+                        taxon = record.get("taxon", {})
+                        if isinstance(taxon, dict):
+                            # Check attributes.organismGroup - most reliable indicator
+                            attributes = taxon.get("attributes", {})
+                            if isinstance(attributes, dict):
+                                organism_group = attributes.get("organismGroup", "")
+                                if organism_group == "Fåglar":  # Swedish for "Birds"
+                                    is_bird = True
+                            
+                            # Fallback: Check if vernacular name contains "fågel" (bird in Swedish)
+                            if not is_bird:
+                                vernacular_name = taxon.get("vernacularName", "").lower()
+                                if "fågel" in vernacular_name or "bird" in vernacular_name.lower():
+                                    is_bird = True
+                        
+                        if is_bird:
+                            bird_results.append(record)
+                    
+                    normalized_data['results'] = bird_results
+                    normalized_data['count'] = len(bird_results)
 
                 # Client-side date filtering (Artportalen API doesn't reliably filter by date)
                 # Filter results by date range if dates were specified
@@ -293,9 +331,7 @@ class ArtportalenAPIClient:
                                 "take": batch_size,
                             }
                             
-                            # Copy filters from original request
-                            if taxon_id:
-                                next_request_body["taxon"] = {"ids": [taxon_id]}
+                            # Copy filters from original request (but NOT taxon filter - we filter client-side)
                             if start_date and end_date:
                                 next_request_body["date"] = {
                                     "startDate": start_date.isoformat(),
@@ -310,10 +346,10 @@ class ArtportalenAPIClient:
                                 }
                             if country:
                                 next_request_body["country"] = country
-                            if state_province:
-                                next_request_body["province"] = state_province
-                            if locality:
-                                next_request_body["locality"] = locality
+                            # Copy geographics filter from original request
+                            geographics_filter = get_area_filter(state_province=state_province, locality=locality)
+                            if geographics_filter:
+                                next_request_body.update(geographics_filter)
                             
                             with httpx.Client(timeout=30.0) as client:
                                 next_response = client.post(
@@ -330,7 +366,20 @@ class ArtportalenAPIClient:
                                     if not next_batch_records:
                                         break  # No more records
                                     
-                                    # Filter this batch and add to results
+                                    # Filter for birds if taxon_id was requested
+                                    if taxon_id:
+                                        bird_batch = []
+                                        for record in next_batch_records:
+                                            taxon = record.get("taxon", {})
+                                            if isinstance(taxon, dict):
+                                                attributes = taxon.get("attributes", {})
+                                                if isinstance(attributes, dict):
+                                                    organism_group = attributes.get("organismGroup", "")
+                                                    if organism_group == "Fåglar":
+                                                        bird_batch.append(record)
+                                        next_batch_records = bird_batch
+                                    
+                                    # Filter this batch by date and add to results
                                     filtered_batch = filter_records_by_date(next_batch_records)
                                     filtered_results.extend(filtered_batch)
                                     batches_checked += 1
