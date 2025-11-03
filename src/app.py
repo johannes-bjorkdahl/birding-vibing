@@ -35,6 +35,7 @@ from src.locations import (
     Location,
     LocationType
 )
+from src.app_components.database_management import display_database_management
 
 
 def init_session_state():
@@ -473,6 +474,13 @@ def display_about_section():
             st.markdown(f"- ✅ Artportalen API: Available (Real-time)")
         else:
             st.markdown(f"- ⚠️ Artportalen API: Not configured (using GBIF only)")
+        
+        # Show database status
+        if api_info.get("database_available", False):
+            threshold_days = api_info.get("database_threshold_days", 30)
+            st.markdown(f"- 💾 Local Database: Available (for data older than {threshold_days} days)")
+        else:
+            st.markdown(f"- ⚠️ Local Database: Not available (using APIs only)")
 
         if st.button("View Dataset on GBIF"):
             st.markdown(f"[Open GBIF Dataset](https://www.gbif.org/dataset/{Config.DATASET_KEY})")
@@ -507,7 +515,12 @@ def display_search_filters():
     st.session_state.api_selection = selected_api
     
     if selected_api == "auto":
-        st.sidebar.caption(f"🔄 Auto-selection: Recent ({Config.ARTPORTALEN_DATE_THRESHOLD_DAYS} days) → Artportalen, Older → GBIF")
+        api_info = st.session_state.unified_client.get_current_api_info()
+        if api_info.get("database_available", False):
+            threshold_days = api_info.get("database_threshold_days", 30)
+            st.sidebar.caption(f"🔄 Auto-selection: Recent ({Config.ARTPORTALEN_DATE_THRESHOLD_DAYS} days) → Artportalen, Older ({threshold_days}+ days) → Database, Mid-range → GBIF")
+        else:
+            st.sidebar.caption(f"🔄 Auto-selection: Recent ({Config.ARTPORTALEN_DATE_THRESHOLD_DAYS} days) → Artportalen, Older → GBIF")
     elif selected_api == "artportalen":
         st.sidebar.caption("⚡ Using Artportalen API (Real-time data)")
     else:
@@ -923,8 +936,14 @@ def display_observations():
     header_col1, header_col2, header_col3, header_col4, header_col5 = st.columns([1.5, 1, 1, 1, 1.5])
     
     with header_col1:
-        if api_source == 'artportalen':
+        # Show data source with database indicator if applicable
+        api_selection_reason = data.get('_api_selection_reason', '')
+        if api_source == 'database':
+            st.markdown("💾 **Local Database** (Fast queries)")
+        elif api_source == 'artportalen':
             st.markdown("📡 **Artportalen** (Real-time)")
+        elif 'mixed' in api_selection_reason.lower() or 'database' in api_selection_reason.lower():
+            st.markdown("🔄 **Mixed Sources** (Database + API)")
         else:
             st.markdown("📚 **GBIF** (Weekly updates)")
     
@@ -1014,32 +1033,44 @@ def main():
     # Initialize session state
     init_session_state()
 
+    # Page selection
+    page = st.sidebar.selectbox(
+        "Navigation",
+        ["🔍 Search Observations", "💾 Database Management"],
+        index=0
+    )
+
     # About section
     display_about_section()
 
-    # Search filters
-    search_params = display_search_filters()
+    if page == "💾 Database Management":
+        # Database Management Page
+        display_database_management()
+    else:
+        # Search Observations Page (default)
+        # Search filters
+        search_params = display_search_filters()
 
-    # Auto-fetch current day's observations on first page load with default location
-    if not st.session_state.auto_fetched:
-        today = datetime.now().date()
-        yesterday = today - timedelta(days=1)
-        auto_search_params = {
-            'start_date': yesterday,  # Include yesterday for more results
-            'end_date': today,
-            'max_results': search_params['max_results'],
-            'location_id': search_params.get('location_id', 'goteborgsomradet'),
-            'api_selection': search_params['api_selection']
-        }
-        search_observations(auto_search_params)
-        st.session_state.auto_fetched = True
+        # Auto-fetch current day's observations on first page load with default location
+        if not st.session_state.auto_fetched:
+            today = datetime.now().date()
+            yesterday = today - timedelta(days=1)
+            auto_search_params = {
+                'start_date': yesterday,  # Include yesterday for more results
+                'end_date': today,
+                'max_results': search_params['max_results'],
+                'location_id': search_params.get('location_id', 'goteborgsomradet'),
+                'api_selection': search_params['api_selection']
+            }
+            search_observations(auto_search_params)
+            st.session_state.auto_fetched = True
 
-    # Search button
-    if st.sidebar.button("🔍 Search", type="primary", width='stretch'):
-        search_observations(search_params)
+        # Search button
+        if st.sidebar.button("🔍 Search", type="primary", width='stretch'):
+            search_observations(search_params)
 
-    # Display results
-    display_observations()
+        # Display results
+        display_observations()
 
     # Footer
     st.markdown("---")

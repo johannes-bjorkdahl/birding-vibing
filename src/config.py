@@ -96,3 +96,15 @@ class Config:
     # Artportalen taxon ID for birds (different from GBIF taxon key)
     # This is the taxon ID used in Artportalen's system
     ARTPORTALEN_BIRDS_TAXON_ID = int(os.getenv("ARTPORTALEN_BIRDS_TAXON_ID", "100012"))
+    
+    # Database configuration
+    # Path to DuckDB database file
+    DATABASE_PATH = os.getenv("DATABASE_PATH", "data/birds.duckdb")
+    
+    # Database date threshold (days)
+    # Historical dates (older than this threshold) will use DuckDB
+    # Recent dates (within this threshold) will use Artportalen API
+    DATABASE_DATE_THRESHOLD_DAYS = int(os.getenv("DATABASE_DATE_THRESHOLD_DAYS", "30"))
+    
+    # Enable database usage (feature flag)
+    USE_DATABASE = os.getenv("USE_DATABASE", "true").lower() in ("true", "1", "yes")

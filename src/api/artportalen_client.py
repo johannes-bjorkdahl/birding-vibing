@@ -1,5 +1,6 @@
 """API client for Artportalen (Swedish Species Observation System) API."""
 import httpx
+import time
 from typing import Dict, List, Optional, Any
 from datetime import date, datetime
 from src.locations import get_area_filter
@@ -86,7 +87,11 @@ class ArtportalenAPIClient:
         # Note: Artportalen API doesn't reliably filter by date server-side,
         # so when date filters are specified, we request more records to increase
         # chances of finding matches (since API returns records from various dates)
-        request_limit = min(limit, 1000)  # API max is 1000
+        # API limits per official documentation:
+        # - Maximum page size: 1000 records per page
+        # - Maximum total: 10,000 records per search query (skip + take cannot exceed 10,000)
+        # Source: https://github.com/biodiversitydata-se/SOS/blob/master/Docs/FAQ.md
+        request_limit = min(limit, 1000)  # API max page size is 1000
         if start_date or end_date:
             # When filtering by date, request more records since API doesn't filter server-side
             # This increases probability of finding records in the specified date range
@@ -134,40 +139,58 @@ class ArtportalenAPIClient:
             request_body.update(geographics_filter)
 
         try:
-            with httpx.Client(timeout=30.0) as client:
+            with httpx.Client(timeout=60.0) as client:  # Increased timeout to 60 seconds
                 # Try POST first (common for search endpoints with filters)
-                try:
-                    response = client.post(
-                        endpoint,
-                        json=request_body,
-                        headers=self.headers
-                    )
-                    response.raise_for_status()
-                    data = response.json()
-                except httpx.HTTPStatusError as e:
-                    # If POST fails, try GET with query parameters
-                    if e.response.status_code == 405:  # Method Not Allowed
-                        # Convert to query parameters
-                        params = {}
-                        if taxon_id:
-                            params["taxonIds"] = str(taxon_id)
-                        if start_date:
-                            params["dateFrom"] = start_date.isoformat()
-                        if end_date:
-                            params["dateTo"] = end_date.isoformat()
-                        if country:
-                            params["country"] = country
-                        # Note: GET fallback doesn't support geographics filter properly
-                        # Location filters will be skipped if POST fails
-                        # This is acceptable since POST is the primary method
-                        params["skip"] = offset
-                        params["take"] = min(limit, 1000)
+                # Add retry logic for rate limiting (429 errors)
+                max_retries = 5
+                retry_delay = 1.0  # Start with 1 second delay
+                
+                for attempt in range(max_retries):
+                    try:
+                        response = client.post(
+                            endpoint,
+                            json=request_body,
+                            headers=self.headers
+                        )
                         
-                        response = client.get(endpoint, params=params, headers=self.headers)
+                        # Handle 429 rate limit errors with exponential backoff
+                        if response.status_code == 429:
+                            if attempt < max_retries - 1:
+                                wait_time = retry_delay * (2 ** attempt)  # Exponential backoff: 1s, 2s, 4s, 8s, 16s
+                                time.sleep(wait_time)
+                                continue
+                            else:
+                                # Last attempt failed, raise the error
+                                response.raise_for_status()
+                        
                         response.raise_for_status()
                         data = response.json()
-                    else:
-                        raise
+                        break  # Success, exit retry loop
+                        
+                    except httpx.HTTPStatusError as e:
+                        # If POST fails, try GET with query parameters
+                        if e.response.status_code == 405:  # Method Not Allowed
+                            # Convert to query parameters
+                            params = {}
+                            if taxon_id:
+                                params["taxonIds"] = str(taxon_id)
+                            if start_date:
+                                params["dateFrom"] = start_date.isoformat()
+                            if end_date:
+                                params["dateTo"] = end_date.isoformat()
+                            if country:
+                                params["country"] = country
+                            # Note: GET fallback doesn't support geographics filter properly
+                            # Location filters will be skipped if POST fails
+                            # This is acceptable since POST is the primary method
+                            params["skip"] = offset
+                            params["take"] = min(limit, 1000)
+                            
+                            response = client.get(endpoint, params=params, headers=self.headers)
+                            response.raise_for_status()
+                            data = response.json()
+                        else:
+                            raise
 
                 # Normalize response structure
                 # Artportalen API returns: {skip, take, totalCount, records}
@@ -351,14 +374,39 @@ class ArtportalenAPIClient:
                             if geographics_filter:
                                 next_request_body.update(geographics_filter)
                             
-                            with httpx.Client(timeout=30.0) as client:
-                                next_response = client.post(
-                                    endpoint,
-                                    json=next_request_body,
-                                    headers=self.headers
-                                )
-                                next_response.raise_for_status()
-                                next_data = next_response.json()
+                            with httpx.Client(timeout=60.0) as client:  # Increased timeout to 60 seconds
+                                # Add retry logic for rate limiting in batch requests
+                                max_batch_retries = 3
+                                batch_retry_delay = 1.0
+                                
+                                for batch_attempt in range(max_batch_retries):
+                                    try:
+                                        next_response = client.post(
+                                            endpoint,
+                                            json=next_request_body,
+                                            headers=self.headers
+                                        )
+                                        
+                                        # Handle 429 rate limit errors
+                                        if next_response.status_code == 429:
+                                            if batch_attempt < max_batch_retries - 1:
+                                                wait_time = batch_retry_delay * (2 ** batch_attempt)
+                                                time.sleep(wait_time)
+                                                continue
+                                            else:
+                                                next_response.raise_for_status()
+                                        
+                                        next_response.raise_for_status()
+                                        next_data = next_response.json()
+                                        break  # Success, exit retry loop
+                                    except httpx.HTTPStatusError as e:
+                                        if batch_attempt == max_batch_retries - 1:
+                                            raise  # Last attempt failed
+                                        if e.response.status_code == 429:
+                                            wait_time = batch_retry_delay * (2 ** batch_attempt)
+                                            time.sleep(wait_time)
+                                            continue
+                                        raise
                                 
                                 # Get records from next batch
                                 if isinstance(next_data, dict) and "records" in next_data:
