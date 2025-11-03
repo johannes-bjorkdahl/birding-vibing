@@ -55,3 +55,6 @@ uv.lock
 *.csv
 *.json
 *.xlsx
+
+# Location cache (persistent cache for reverse geocoding)
+.location_cache.json
